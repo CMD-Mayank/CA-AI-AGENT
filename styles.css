@@ -1,0 +1,41 @@
+:root {
+  --background-light: #f9fafb; /* gray-50 */
+  --background-dark: #0f172a;  /* slate-900 */
+  --sidebar-light: #ffffff;
+  --sidebar-dark: #1e293b; /* slate-800 */
+  --text-light-primary: #111827; /* gray-900 */
+  --text-dark-primary: #f1f5f9; /* slate-100 */
+  --text-light-secondary: #6b7280; /* gray-500 */
+  --text-dark-secondary: #94a3b8; /* slate-400 */
+  --border-light: #e5e7eb; /* gray-200 */
+  --border-dark: #334155; /* slate-700 */
+  
+  --primary-color: #0d9488; /* teal-600 */
+  --primary-color-hover: #0f766e; /* teal-700 */
+  --primary-color-light: #f0fdfa; /* teal-50 */
+  --primary-color-dark-bg: #115e59; /* teal-800 */
+
+  --user-message-bg-light: #0d9488;
+  --user-message-text-light: #ffffff;
+  --ai-message-bg-light: #ffffff;
+  --ai-message-bg-dark: #334155; /* slate-700 */
+}
+
+/* Custom scrollbar for a cleaner look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+}
