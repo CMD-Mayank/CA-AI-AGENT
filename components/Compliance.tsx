@@ -1,18 +1,45 @@
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useCallback, useEffect } from 'react';
 import { runChatStream } from '../services/geminiService';
 import { ModuleContainer } from './common/ModuleContainer';
 import { Card } from './common/Card';
 import { Input } from './common/Input';
 import { Button } from './common/Button';
 import { AIResponseStream } from './common/AIResponseStream';
+import { Client } from '../types';
+import { storageService } from '../services/storage';
 
-const Compliance: React.FC = () => {
+interface ComplianceProps {
+    client: Client;
+}
+
+const Compliance: React.FC<ComplianceProps> = ({ client }) => {
     const [formData, setFormData] = useState({
         gstr1: '5000000',
         gstr3b: '4850000',
     });
     const [response, setResponse] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const savedState = storageService.getModuleState(client.id, 'Compliance');
+        if (savedState) {
+            if (savedState.formData) setFormData(savedState.formData);
+            if (savedState.response) setResponse(savedState.response);
+        } else {
+             setFormData({ gstr1: '5000000', gstr3b: '4850000' });
+             setResponse('');
+        }
+    }, [client.id]);
+
+    useEffect(() => {
+         const timeout = setTimeout(() => {
+            if(formData.gstr1 !== '5000000' || response) {
+                storageService.saveModuleState(client.id, 'Compliance', { formData, response });
+            }
+        }, 1000);
+        return () => clearTimeout(timeout);
+    }, [formData, response, client.id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,7 +53,7 @@ const Compliance: React.FC = () => {
         setResponse('');
 
         const prompt = `
-        Act as an expert Indian GST practitioner.
+        Act as an expert Indian GST practitioner for Client: ${client.name}.
         A business has the following figures for a specific tax period:
         - Total Taxable Turnover as per GSTR-1: ₹${formData.gstr1}
         - Total Taxable Turnover as per GSTR-3B: ₹${formData.gstr3b}
@@ -51,13 +78,13 @@ const Compliance: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [isLoading, formData]);
+    }, [isLoading, formData, client]);
 
 
     return (
         <ModuleContainer
             title="GST, TDS & ROC Compliance"
-            description="Use AI-powered tools to check compliance and get actionable insights."
+            description={`Compliance check and notice drafting for ${client.name}.`}
         >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1">

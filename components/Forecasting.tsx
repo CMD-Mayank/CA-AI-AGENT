@@ -1,12 +1,20 @@
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useCallback, useEffect } from 'react';
 import { runChatStream } from '../services/geminiService';
 import { ModuleContainer } from './common/ModuleContainer';
 import { Card } from './common/Card';
 import { Input } from './common/Input';
 import { Button } from './common/Button';
 import { AIResponseStream } from './common/AIResponseStream';
+import { Client } from '../types';
+import { storageService } from '../services/storage';
+import { CloudUploadIcon } from './icons/CloudUploadIcon';
 
-const Forecasting: React.FC = () => {
+interface ForecastingProps {
+    client: Client;
+}
+
+const Forecasting: React.FC<ForecastingProps> = ({ client }) => {
     const [formData, setFormData] = useState({
         revenue: '500000',
         cogs: '200000',
@@ -14,9 +22,53 @@ const Forecasting: React.FC = () => {
     });
     const [response, setResponse] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    
+    useEffect(() => {
+        const savedState = storageService.getModuleState(client.id, 'Forecasting');
+        if (savedState) {
+            if (savedState.formData) setFormData(savedState.formData);
+            if (savedState.response) setResponse(savedState.response);
+        } else {
+             setFormData({ revenue: '500000', cogs: '200000', opex: '150000' });
+             setResponse('');
+        }
+    }, [client.id]);
+
+    useEffect(() => {
+         const timeout = setTimeout(() => {
+             if(formData.revenue !== '500000' || response) {
+                 storageService.saveModuleState(client.id, 'Forecasting', { formData, response });
+             }
+        }, 1000);
+        return () => clearTimeout(timeout);
+    }, [formData, response, client.id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleImport = () => {
+        setIsImporting(true);
+        // Simulate import from CSV
+        setTimeout(() => {
+             const importedData = {
+                revenue: (Math.floor(Math.random() * 800000) + 500000).toString(),
+                cogs: (Math.floor(Math.random() * 300000) + 150000).toString(),
+                opex: (Math.floor(Math.random() * 200000) + 100000).toString(),
+            };
+            setFormData(importedData);
+            setIsImporting(false);
+            
+            storageService.logActivity({
+              id: Date.now().toString(),
+              clientId: client.id,
+              clientName: client.name,
+              action: 'Data Import',
+              timestamp: Date.now(),
+              details: 'Imported historical data for forecasting'
+          });
+        }, 1500);
     };
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -27,7 +79,7 @@ const Forecasting: React.FC = () => {
         setResponse('');
 
         const prompt = `
-        Act as a senior financial analyst.
+        Act as a senior financial analyst for Client: ${client.name} (${client.industry}).
         A business provides the following current monthly financial data:
         - Monthly Revenue: ₹${formData.revenue}
         - Monthly Cost of Goods Sold (COGS): ₹${formData.cogs}
@@ -53,17 +105,32 @@ const Forecasting: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [isLoading, formData]);
+    }, [isLoading, formData, client]);
 
 
     return (
         <ModuleContainer
             title="Financial Forecasting"
-            description="Generate a 6-month profit and loss forecast based on your current financials."
+            description={`Generate projected financials for ${client.name}.`}
         >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1">
-                    <Card title="Enter Monthly Figures">
+                    <Card>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Monthly Data</h3>
+                            <button 
+                                onClick={handleImport}
+                                disabled={isImporting}
+                                className="text-xs flex items-center gap-1 text-teal-600 dark:text-teal-400 hover:text-teal-800 border border-teal-100 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/30 px-2 py-1 rounded transition-colors"
+                            >
+                                {isImporting ? (
+                                    <span className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full"></span>
+                                ) : (
+                                    <CloudUploadIcon className="w-3 h-3" />
+                                )}
+                                Import CSV
+                            </button>
+                        </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <Input label="Monthly Revenue (₹)" name="revenue" type="number" value={formData.revenue} onChange={handleChange} required />
                             <Input label="Monthly COGS (₹)" name="cogs" type="number" value={formData.cogs} onChange={handleChange} required />

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from '../constants';
 
@@ -10,7 +11,9 @@ interface FilePayload {
 
 export async function* runChatStream(prompt: string, file?: FilePayload): AsyncGenerator<string> {
   try {
-    const model = 'gemini-2.5-pro';
+    // Upgraded to gemini-3-pro-preview for professional-grade complex reasoning
+    // required for Chartered Accountant tasks.
+    const model = 'gemini-3-pro-preview';
 
     let contents: any;
 
