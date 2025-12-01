@@ -5,15 +5,17 @@ import { Card } from './common/Card';
 import { Button } from './common/Button';
 import { Input } from './common/Input';
 import { storageService } from '../services/storage';
-import { FirmProfile } from '../types';
+import { FirmProfile, ThemeColor } from '../types';
 
 interface SettingsProps {
     onLogout?: () => void;
     onFirmUpdate?: (profile: FirmProfile) => void;
     currentFirmProfile?: FirmProfile;
+    activeTheme: ThemeColor;
+    onThemeChange: (theme: ThemeColor) => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirmProfile }) => {
+const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirmProfile, activeTheme, onThemeChange }) => {
     const [activeTab, setActiveTab] = useState<'account' | 'firm' | 'team'>('firm');
     const [email, setEmail] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +101,15 @@ const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirm
             reader.readAsText(file);
         }
     };
+    
+    const themes: {id: ThemeColor, label: string, color: string}[] = [
+        { id: 'teal', label: 'Classic Teal', color: '#0d9488' },
+        { id: 'blue', label: 'Corporate Blue', color: '#2563eb' },
+        { id: 'indigo', label: 'Modern Indigo', color: '#4f46e5' },
+        { id: 'violet', label: 'Royal Violet', color: '#7c3aed' },
+        { id: 'rose', label: 'Energetic Rose', color: '#e11d48' },
+        { id: 'orange', label: 'Warm Orange', color: '#ea580c' },
+    ];
 
     return (
         <ModuleContainer 
@@ -106,27 +117,27 @@ const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirm
             description="Manage firm identity, subscription, and team access."
         >
             {/* Tab Navigation */}
-            <div className="flex border-b border-gray-200 dark:border-slate-700 mb-6">
+            <div className="flex border-b border-gray-200 dark:border-slate-700 mb-6 overflow-x-auto">
                 <button 
                     onClick={() => setActiveTab('firm')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors relative ${activeTab === 'firm' ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400'}`}
+                    className={`pb-3 px-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'firm' ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400'}`}
                 >
                     Firm Profile
-                    {activeTab === 'firm' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600 dark:bg-teal-400"></div>}
+                    {activeTab === 'firm' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-600 dark:bg-primary-400"></div>}
                 </button>
                 <button 
                     onClick={() => setActiveTab('team')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors relative ${activeTab === 'team' ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400'}`}
+                    className={`pb-3 px-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'team' ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400'}`}
                 >
                     Team Management
-                    {activeTab === 'team' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600 dark:bg-teal-400"></div>}
+                    {activeTab === 'team' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-600 dark:bg-primary-400"></div>}
                 </button>
                 <button 
                     onClick={() => setActiveTab('account')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors relative ${activeTab === 'account' ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400'}`}
+                    className={`pb-3 px-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'account' ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 hover:text-gray-700 dark:text-slate-400'}`}
                 >
                     My Account
-                    {activeTab === 'account' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600 dark:bg-teal-400"></div>}
+                    {activeTab === 'account' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-600 dark:bg-primary-400"></div>}
                 </button>
             </div>
 
@@ -166,15 +177,37 @@ const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirm
                             </form>
                          </Card>
                          
-                         <Card title="Report Settings">
-                             <div className="flex items-center justify-between py-2">
-                                 <div>
-                                     <p className="font-medium text-gray-800 dark:text-white">Auto-Header on Reports</p>
-                                     <p className="text-xs text-gray-500">Automatically add Firm Name & FRN to exported documents.</p>
-                                 </div>
-                                 <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                                    <input type="checkbox" name="toggle" id="toggle" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 checked:border-teal-600 right-6 border-gray-300"/>
-                                    <label htmlFor="toggle" className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer checked:bg-teal-600"></label>
+                         <Card title="Appearance & Branding">
+                             <div className="space-y-6">
+                                <div>
+                                     <p className="font-medium text-gray-800 dark:text-white mb-3">Color Theme</p>
+                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                         {themes.map(theme => (
+                                             <button
+                                                key={theme.id}
+                                                onClick={() => onThemeChange(theme.id)}
+                                                className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
+                                                    activeTheme === theme.id 
+                                                    ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-400 ring-1 ring-primary-500' 
+                                                    : 'border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
+                                                }`}
+                                             >
+                                                 <div className="w-6 h-6 rounded-full shadow-sm" style={{ backgroundColor: theme.color }}></div>
+                                                 <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{theme.label}</span>
+                                             </button>
+                                         ))}
+                                     </div>
+                                </div>
+
+                                <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-slate-700">
+                                     <div>
+                                         <p className="font-medium text-gray-800 dark:text-white">Auto-Header on Reports</p>
+                                         <p className="text-xs text-gray-500">Automatically add Firm Name & FRN to exported documents.</p>
+                                     </div>
+                                     <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                                        <input type="checkbox" name="toggle" id="toggle" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 checked:border-primary-600 right-6 border-gray-300"/>
+                                        <label htmlFor="toggle" className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer checked:bg-primary-600"></label>
+                                    </div>
                                 </div>
                              </div>
                          </Card>
@@ -186,7 +219,7 @@ const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirm
                          <Card title="Partners & Staff">
                              <div className="flex justify-between items-center mb-4">
                                  <h4 className="text-sm font-medium text-gray-500">Active Users (3/5)</h4>
-                                 <button className="text-teal-600 text-sm font-semibold hover:underline">+ Invite Member</button>
+                                 <button className="text-primary-600 text-sm font-semibold hover:underline">+ Invite Member</button>
                              </div>
                              <div className="space-y-3">
                                  {[
@@ -196,7 +229,7 @@ const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirm
                                  ].map((member, i) => (
                                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-100 dark:border-slate-700">
                                          <div className="flex items-center gap-3">
-                                             <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">
+                                             <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold">
                                                  {member.img}
                                              </div>
                                              <div>
@@ -218,7 +251,7 @@ const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirm
                     <div className="space-y-6 animate-fade-in">
                         <Card title="User Profile">
                              <div className="flex items-center gap-4 mb-6">
-                                <div className="h-12 w-12 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-teal-700 dark:text-teal-300 text-lg font-bold">
+                                <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-300 text-lg font-bold">
                                     {email ? email[0].toUpperCase() : 'U'}
                                 </div>
                                 <div>
@@ -240,7 +273,7 @@ const Settings: React.FC<SettingsProps> = ({ onLogout, onFirmUpdate, currentFirm
                              <p className="text-sm text-gray-500 mb-4">
                                  Since this application runs securely on your local device, we recommend taking regular backups of your firm's data.
                              </p>
-                             <div className="flex gap-4">
+                             <div className="flex flex-col sm:flex-row gap-4">
                                  <button 
                                      onClick={handleBackup}
                                      className="flex-1 flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"

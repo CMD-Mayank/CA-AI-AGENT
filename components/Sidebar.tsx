@@ -60,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
       <div className="p-6 pb-0">
         {/* White-Labeled Firm Header */}
         <div className="flex items-center space-x-3 mb-8">
-            <div className="w-10 h-10 bg-teal-700 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-md flex-shrink-0">
+            <div className="w-10 h-10 bg-primary-700 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-md flex-shrink-0">
                 {firmProfile?.name ? firmProfile.name.charAt(0).toUpperCase() : 'CA'}
             </div>
             <div className="overflow-hidden">
@@ -78,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
                 <span>Active Client File</span>
                 <button 
                     onClick={onAddClient}
-                    className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-[10px] font-bold border border-teal-200 dark:border-teal-800 rounded px-1.5 py-0.5 transition-colors"
+                    className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-[10px] font-bold border border-primary-200 dark:border-primary-800 rounded px-1.5 py-0.5 transition-colors"
                 >
                     + NEW
                 </button>
@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
                             const client = clients.find(c => c.id === e.target.value);
                             if (client) onClientChange(client);
                         }}
-                        className="w-full p-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-800 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none appearance-none cursor-pointer truncate pr-6"
+                        className="w-full p-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:outline-none appearance-none cursor-pointer truncate pr-6"
                     >
                         {clients.map(client => (
                             <option key={client.id} value={client.id}>
@@ -105,7 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
                 </div>
                 <button 
                     onClick={onEditClient}
-                    className="p-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                    className="p-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                     title="Manage Client Details"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -127,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
                 onClick={() => setActiveView(item.view)}
                 className={`w-full flex items-center p-3 rounded-lg text-sm font-medium transition-colors ${
                   activeView === item.view
-                    ? 'bg-teal-50 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 border border-teal-100 dark:border-teal-800'
+                    ? 'bg-primary-50 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-100 dark:border-primary-800'
                     : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 border border-transparent'
                 }`}
               >
@@ -145,7 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
                 onClick={() => setActiveView(View.AuditLog)}
                 className={`w-full flex items-center p-3 rounded-lg text-sm font-medium transition-colors ${
                   activeView === View.AuditLog
-                    ? 'bg-teal-50 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300'
+                    ? 'bg-primary-50 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
                     : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700/50'
                 }`}
               >
@@ -158,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
                 onClick={() => setActiveView(View.Settings)}
                 className={`w-full flex items-center p-3 rounded-lg text-sm font-medium transition-colors ${
                   activeView === View.Settings
-                    ? 'bg-teal-50 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300'
+                    ? 'bg-primary-50 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
                     : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700/50'
                 }`}
               >

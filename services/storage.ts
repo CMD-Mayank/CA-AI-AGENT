@@ -1,5 +1,5 @@
 
-import { ChatMessage, FirmProfile, ClientDocument, Client, ActivityLog, Invoice, Task, TimeLog } from '../types';
+import { ChatMessage, FirmProfile, ClientDocument, Client, ActivityLog, Invoice, Task, TimeLog, ThemeColor } from '../types';
 
 const CHAT_STORAGE_KEY_PREFIX = 'ca-agent-chat-history-';
 const DISCLAIMER_STORAGE_KEY = 'ca-agent-disclaimer-seen';
@@ -12,7 +12,8 @@ const ACTIVITY_LOG_KEY = 'ca-agent-activity-log';
 const INVOICES_KEY_PREFIX = 'ca-agent-invoices-';
 const TASKS_KEY = 'ca-agent-tasks';
 const TIMELOGS_KEY = 'ca-agent-timelogs';
-const THEME_KEY = 'ca-agent-theme';
+const THEME_MODE_KEY = 'ca-agent-theme-mode'; // light/dark
+const THEME_COLOR_KEY = 'ca-agent-theme-color';
 
 export const storageService = {
   saveMessages: (clientId: string, messages: ChatMessage[]) => {
@@ -315,11 +316,19 @@ export const storageService = {
   
   // --- Theme Management ---
   saveTheme: (isDark: boolean) => {
-      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+      localStorage.setItem(THEME_MODE_KEY, isDark ? 'dark' : 'light');
   },
 
   getTheme: (): boolean => {
-      return localStorage.getItem(THEME_KEY) === 'dark';
+      return localStorage.getItem(THEME_MODE_KEY) === 'dark';
+  },
+
+  saveThemeColor: (color: ThemeColor) => {
+      localStorage.setItem(THEME_COLOR_KEY, color);
+  },
+
+  getThemeColor: (): ThemeColor => {
+      return (localStorage.getItem(THEME_COLOR_KEY) as ThemeColor) || 'teal';
   },
   
   // --- Stats Helper ---

@@ -156,7 +156,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ clients, onClientSel
                     <input 
                         type="text" 
                         placeholder="Search clients, reports, or commands (Ctrl+K)" 
-                        className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500"
+                        className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onFocus={() => searchQuery && setShowResults(true)}
@@ -183,11 +183,11 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ clients, onClientSel
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase w-16 text-center shrink-0 ${
                                     res.type === 'Client' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
                                     res.type === 'Navigate' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' :
-                                    'bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300'
+                                    'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
                                 }`}>
                                     {res.type}
                                 </span>
-                                <span className="text-sm text-gray-700 dark:text-slate-200 font-medium group-hover:text-teal-600 dark:group-hover:text-teal-400 truncate">
+                                <span className="text-sm text-gray-700 dark:text-slate-200 font-medium group-hover:text-primary-600 dark:group-hover:text-primary-400 truncate">
                                     {res.label}
                                 </span>
                             </button>
@@ -262,7 +262,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ clients, onClientSel
 
                 {/* Profile */}
                 <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                    <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-sm">
+                    <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-sm">
                         <UserIcon className="w-5 h-5" />
                     </div>
                 </div>

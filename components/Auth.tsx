@@ -27,10 +27,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4 text-gray-900 dark:text-white">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-teal-600 rounded-xl flex items-center justify-center text-white font-bold text-3xl shadow-lg transform -rotate-6">
+          <div className="mx-auto h-16 w-16 bg-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-3xl shadow-lg transform -rotate-6">
             CA
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
@@ -44,21 +44,27 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         <div className="bg-white dark:bg-slate-800 py-8 px-4 shadow-xl rounded-2xl sm:px-10 border border-gray-100 dark:border-slate-700">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <Input 
+              id="email"
+              name="email"
               label="Email Address" 
               type="email" 
               required 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
+              autoComplete="email"
             />
             
             <Input 
+              id="password"
+              name="password"
               label="Password" 
               type="password" 
               required 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              autoComplete={isLogin ? "current-password" : "new-password"}
             />
 
             <div className="flex items-center justify-between">
@@ -67,7 +73,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-slate-300">
                   Remember me
@@ -76,7 +82,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
               {isLogin && (
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-teal-600 hover:text-teal-500">
+                  <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
                     Forgot password?
                   </a>
                 </div>
@@ -103,7 +109,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             <div className="mt-6 text-center">
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="font-medium text-teal-600 hover:text-teal-500 transition-colors"
+                className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
               >
                 {isLogin ? 'Start your 14-day free trial' : 'Sign in to your account'}
               </button>
@@ -112,7 +118,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         </div>
         
         <p className="text-center text-xs text-gray-500 dark:text-slate-500">
-          By signing in, you agree to our <a href="#" className="underline hover:text-gray-900">Terms of Service</a> and <a href="#" className="underline hover:text-gray-900">Privacy Policy</a>.
+          By signing in, you agree to our <a href="#" className="underline hover:text-gray-900 dark:hover:text-white">Terms of Service</a> and <a href="#" className="underline hover:text-gray-900 dark:hover:text-white">Privacy Policy</a>.
         </p>
       </div>
     </div>

@@ -272,7 +272,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
                 Advisory Assistant
             </h1>
             {client && (
-                <p className="text-xs text-teal-600 dark:text-teal-400 font-medium mt-0.5">
+                <p className="text-xs text-primary-600 dark:text-primary-400 font-medium mt-0.5">
                     Context: {client.name} ({client.type})
                 </p>
             )}
@@ -309,7 +309,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
                                   <button 
                                     key={t.id} 
                                     onClick={() => handleTemplateClick(t)}
-                                    className="w-full text-left p-2 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg text-sm text-gray-700 dark:text-slate-200 transition-colors"
+                                    className="w-full text-left p-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg text-sm text-gray-700 dark:text-slate-200 transition-colors"
                                   >
                                       {t.title}
                                   </button>
@@ -324,8 +324,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
       <div className="flex-1 overflow-y-auto space-y-6 p-4 md:p-6">
         {messages.length === 0 && (
           <div className="text-center pt-10 animate-fade-in">
-            <div className="inline-block p-4 bg-teal-100 dark:bg-teal-900/50 rounded-full">
-              <SparklesIcon className="text-teal-600 dark:text-teal-300 w-8 h-8" />
+            <div className="inline-block p-4 bg-primary-100 dark:bg-primary-900/50 rounded-full">
+              <SparklesIcon className="text-primary-600 dark:text-primary-300 w-8 h-8" />
             </div>
             <h2 className="mt-4 text-2xl font-semibold text-gray-800 dark:text-gray-200">CA AI Associate</h2>
             <p className="mt-2 text-gray-500 dark:text-slate-400">Ready to assist with client {client?.name || 'files'}.</p>
@@ -335,7 +335,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
                   onClick={() => setShowTemplates(true)}
                   className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-all text-sm font-medium text-gray-700 dark:text-slate-200"
                 >
-                  <TemplateIcon className="w-5 h-5 text-teal-600" />
+                  <TemplateIcon className="w-5 h-5 text-primary-600" />
                   Browse Prompt Library
                 </button>
             </div>
@@ -345,13 +345,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
         {messages.map((msg, index) => (
           <div key={index} className={`group flex items-start gap-4 ${msg.sender === MessageSender.USER ? 'justify-end' : ''}`}>
              {msg.sender === MessageSender.AI && (
-              <div className="w-9 h-9 rounded-full bg-teal-700 flex items-center justify-center flex-shrink-0 text-white shadow-sm border border-teal-600">
+              <div className="w-9 h-9 rounded-full bg-primary-700 flex items-center justify-center flex-shrink-0 text-white shadow-sm border border-primary-600">
                 <SparklesIcon className="w-5 h-5"/>
               </div>
             )}
             <div className={`relative max-w-2xl p-4 rounded-2xl shadow-sm ${
                 msg.sender === MessageSender.USER
-                  ? 'bg-teal-700 text-white rounded-br-none'
+                  ? 'bg-primary-700 text-white rounded-br-none'
                   : 'bg-white dark:bg-slate-700 text-gray-800 dark:text-slate-200 rounded-bl-none border border-gray-200 dark:border-slate-600'
               }`}>
                {msg.sender === MessageSender.AI && !isLoading && (
@@ -361,15 +361,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
                )}
                {isLoading && index === messages.length - 1 ? (
                    <div className="flex items-center space-x-2">
-                       <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
-                       <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                       <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                       <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
+                       <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                       <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                    </div>
                ) : (
                   <MarkdownRenderer text={msg.text} />
                )}
                {msg.sender === MessageSender.USER && msg.file && (
-                    <div className="mt-3 p-2.5 bg-teal-800/50 rounded-lg flex items-center gap-3 text-white border border-teal-600">
+                    <div className="mt-3 p-2.5 bg-primary-800/50 rounded-lg flex items-center gap-3 text-white border border-primary-600">
                         <DocumentIcon className="w-5 h-5 flex-shrink-0" />
                         <span className="text-sm font-medium truncate">{msg.file.name}</span>
                     </div>
@@ -422,14 +422,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
                 }
                 }}
                 placeholder={`Ask complicated questions...`}
-                className="w-full p-4 pl-14 pr-32 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none resize-none shadow-sm transition-shadow"
+                className="w-full p-4 pl-14 pr-32 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none shadow-sm transition-shadow"
                 rows={2}
                 disabled={isLoading}
             />
             <button
                 type="button"
                 onClick={() => setShowTemplates(!showTemplates)}
-                className={`absolute left-3 top-3 p-1.5 rounded-lg transition-colors ${showTemplates ? 'bg-teal-100 text-teal-700' : 'text-gray-400 hover:text-teal-600 hover:bg-gray-100 dark:hover:bg-slate-700'}`}
+                className={`absolute left-3 top-3 p-1.5 rounded-lg transition-colors ${showTemplates ? 'bg-primary-100 text-primary-700' : 'text-gray-400 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-slate-700'}`}
                 title="Prompt Library"
             >
                 <TemplateIcon className="w-5 h-5" />
@@ -456,7 +456,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
                 <button
                     type="submit"
                     disabled={isLoading || (!input.trim() && !file)}
-                    className="p-2.5 rounded-full bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-400 dark:disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    className="p-2.5 rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:bg-gray-400 dark:disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors shadow-sm"
                     aria-label="Send message"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

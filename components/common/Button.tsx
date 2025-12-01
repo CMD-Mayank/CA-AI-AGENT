@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,7 +11,7 @@ export const Button: React.FC<ButtonProps> = ({ children, isLoading = false, ...
     <button
       {...props}
       disabled={isLoading || props.disabled}
-      className="w-full bg-teal-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:bg-teal-700 transition-colors shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:bg-gray-400 dark:disabled:bg-slate-500 disabled:cursor-not-allowed flex items-center justify-center"
+      className="w-full bg-primary-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-gray-400 dark:disabled:bg-slate-500 disabled:cursor-not-allowed flex items-center justify-center"
     >
       {isLoading ? (
         <>

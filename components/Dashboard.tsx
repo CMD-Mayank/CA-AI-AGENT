@@ -125,7 +125,7 @@ const Dashboard: React.FC<DashboardProps> = ({ client }) => {
         <ModuleContainer title="Practice Overview" description="Real-time operational metrics and activity logs.">
             {/* Top KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="border-l-4 border-l-teal-500">
+                <Card className="border-l-4 border-l-primary-500">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">Active Clients</h4>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.totalClients}</p>
                     <p className="text-xs text-gray-500 mt-2">Managing portfolios</p>
@@ -144,8 +144,8 @@ const Dashboard: React.FC<DashboardProps> = ({ client }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                 {/* AI Insight */}
-                <div className="lg:col-span-2 bg-gradient-to-r from-teal-50 to-white dark:from-teal-900/20 dark:to-slate-800 border border-teal-100 dark:border-teal-800/30 rounded-xl p-6 shadow-sm flex items-start gap-4">
-                    <div className="p-2 bg-teal-100 dark:bg-teal-800 rounded-full text-teal-600 dark:text-teal-300 shrink-0">
+                <div className="lg:col-span-2 bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-slate-800 border border-primary-100 dark:border-primary-800/30 rounded-xl p-6 shadow-sm flex items-start gap-4">
+                    <div className="p-2 bg-primary-100 dark:bg-primary-800 rounded-full text-primary-600 dark:text-primary-300 shrink-0">
                         <SparklesIcon className="w-6 h-6" />
                     </div>
                     <div>
@@ -166,14 +166,15 @@ const Dashboard: React.FC<DashboardProps> = ({ client }) => {
                         <svg className="w-full h-full overflow-visible" viewBox="0 0 400 100" preserveAspectRatio="none">
                             <defs>
                                 <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stopColor="#0d9488" stopOpacity="0.2" />
-                                    <stop offset="100%" stopColor="#0d9488" stopOpacity="0" />
+                                    <stop offset="0%" className="text-primary-500" stopColor="currentColor" stopOpacity="0.2" />
+                                    <stop offset="100%" className="text-primary-500" stopColor="currentColor" stopOpacity="0" />
                                 </linearGradient>
                             </defs>
                             <path d={`M0,100 ${chartPoints} L400,100 Z`} fill="url(#gradient)" />
                             <polyline
                                 fill="none"
-                                stroke="#0d9488"
+                                stroke="currentColor"
+                                className="text-primary-500"
                                 strokeWidth="3"
                                 points={chartPoints}
                                 vectorEffect="non-scaling-stroke"
@@ -203,7 +204,7 @@ const Dashboard: React.FC<DashboardProps> = ({ client }) => {
                             recentActivity.map((log, idx) => (
                                 <div key={idx} className="flex gap-3 pb-3 border-b border-gray-50 dark:border-slate-700 last:border-0">
                                     <div className="mt-1">
-                                        <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+                                        <div className="w-2 h-2 rounded-full bg-primary-500"></div>
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{log.action}</p>

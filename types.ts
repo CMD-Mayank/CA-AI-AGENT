@@ -39,6 +39,8 @@ export enum View {
     Timesheets = 'Timesheets',
 }
 
+export type ThemeColor = 'teal' | 'blue' | 'indigo' | 'rose' | 'orange' | 'violet';
+
 export interface Client {
     id: string;
     name: string;

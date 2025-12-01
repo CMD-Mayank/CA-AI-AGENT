@@ -21,7 +21,7 @@ import { AuditLogs } from './components/AuditLogs';
 import { ClientOverview } from './components/ClientOverview';
 import { Timesheets } from './components/Timesheets';
 import { storageService } from './services/storage';
-import { View, Client, FirmProfile } from './types';
+import { View, Client, FirmProfile, ThemeColor } from './types';
 
 // Mock Data for Firm Clients (Default)
 const DEFAULT_CLIENTS: Client[] = [
@@ -37,6 +37,7 @@ const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [themeColor, setThemeColor] = useState<ThemeColor>('teal');
   
   // Responsive Sidebar State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -51,7 +52,7 @@ const App: React.FC = () => {
   const [firmProfile, setFirmProfile] = useState<FirmProfile | undefined>(undefined);
 
   useEffect(() => {
-    // Initialize Theme
+    // Initialize Theme Mode
     const storedTheme = storageService.getTheme();
     setDarkMode(storedTheme);
     if (storedTheme) {
@@ -59,6 +60,11 @@ const App: React.FC = () => {
     } else {
         document.documentElement.classList.remove('dark');
     }
+
+    // Initialize Theme Color
+    const storedColor = storageService.getThemeColor();
+    setThemeColor(storedColor);
+    document.documentElement.setAttribute('data-theme', storedColor);
 
     // Check auth status on mount
     const authStatus = storageService.isAuthenticated();
@@ -98,6 +104,12 @@ const App: React.FC = () => {
       } else {
           document.documentElement.classList.remove('dark');
       }
+  };
+
+  const changeThemeColor = (color: ThemeColor) => {
+      setThemeColor(color);
+      storageService.saveThemeColor(color);
+      document.documentElement.setAttribute('data-theme', color);
   };
 
   const handleLogin = () => {
@@ -162,7 +174,15 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     // Views that don't require a selected client
-    if (activeView === View.Settings) return <Settings onLogout={handleLogout} onFirmUpdate={handleFirmUpdate} currentFirmProfile={firmProfile} />;
+    if (activeView === View.Settings) return (
+        <Settings 
+            onLogout={handleLogout} 
+            onFirmUpdate={handleFirmUpdate} 
+            currentFirmProfile={firmProfile} 
+            activeTheme={themeColor}
+            onThemeChange={changeThemeColor}
+        />
+    );
     if (activeView === View.Tasks) return <Tasks clients={clients} />;
     if (activeView === View.Timesheets) return <Timesheets clients={clients} />;
     if (activeView === View.Regulatory) return <RegulatoryUpdates />;
@@ -199,7 +219,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen font-sans bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-slate-100 overflow-hidden relative">
+    <div className="flex h-screen font-sans bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-slate-100 overflow-hidden relative selection:bg-primary-100 selection:text-primary-900">
       
       {isLocked && (
           <LockScreen 
