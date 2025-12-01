@@ -9,6 +9,7 @@ import { storageService } from '../services/storage';
 import { CreditCardIcon } from './icons/CreditCardIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { ClockIcon } from './icons/ClockIcon';
+import { generateInvoicePDF } from '../services/pdfGenerator';
 
 interface BillingProps {
     client: Client;
@@ -99,6 +100,11 @@ const Billing: React.FC<BillingProps> = ({ client, firmProfile }) => {
         setInvoices(updated);
         storageService.saveInvoices(client.id, updated);
     };
+    
+    const handleDownload = (inv: Invoice) => {
+        const firm = storageService.getFirmProfile() || undefined;
+        generateInvoicePDF(inv, firm, client);
+    }
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
@@ -164,7 +170,11 @@ const Billing: React.FC<BillingProps> = ({ client, firmProfile }) => {
                                             {inv.status === 'Draft' && (
                                                 <button onClick={() => markAsSent(inv.id)} className="text-teal-600 hover:text-teal-900 dark:hover:text-teal-400">Mark Sent</button>
                                             )}
-                                            <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                            <button 
+                                                onClick={() => handleDownload(inv)}
+                                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" 
+                                                title="Download PDF"
+                                            >
                                                 <DownloadIcon className="w-4 h-4"/>
                                             </button>
                                         </td>

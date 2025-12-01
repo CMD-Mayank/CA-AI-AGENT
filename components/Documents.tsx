@@ -9,6 +9,7 @@ import { MailIcon } from './icons/MailIcon';
 import { ShareIcon } from './icons/ShareIcon';
 import { WhatsAppIcon } from './icons/WhatsAppIcon';
 import { SignatureIcon } from './icons/SignatureIcon';
+import { generateDocumentPDF } from '../services/pdfGenerator';
 
 interface DocumentsProps {
     client: Client;
@@ -55,15 +56,18 @@ export const Documents: React.FC<DocumentsProps> = ({ client }) => {
     };
 
     const handleDownload = (doc: ClientDocument) => {
-        const blob = new Blob([doc.content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${doc.title.replace(/\s+/g, '_')}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const firmProfile = storageService.getFirmProfile();
+        // Fallback to undefined if null
+        generateDocumentPDF(doc, firmProfile || undefined, client);
+        
+        storageService.logActivity({
+            id: Date.now().toString(),
+            clientId: client.id,
+            clientName: client.name,
+            action: 'Document Downloaded',
+            timestamp: Date.now(),
+            details: `${doc.title} (PDF)`
+        });
     };
     
     const handleEmail = (doc: ClientDocument) => {
@@ -256,8 +260,8 @@ export const Documents: React.FC<DocumentsProps> = ({ client }) => {
                                 <button onClick={() => handleWhatsApp(previewDoc)} className="action-btn flex items-center gap-1 px-3 py-1.5 rounded border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900">
                                     <WhatsAppIcon className="w-3 h-3" /> WhatsApp
                                 </button>
-                                <button onClick={() => handleDownload(previewDoc)} className="action-btn flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-xs text-gray-700 dark:text-slate-300 ml-auto">
-                                    <DownloadIcon className="w-3 h-3" /> Download
+                                <button onClick={() => handleDownload(previewDoc)} className="action-btn flex items-center gap-1 px-3 py-1.5 rounded border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 text-xs text-gray-700 dark:text-slate-300 ml-auto font-medium text-teal-600 dark:text-teal-400">
+                                    <DownloadIcon className="w-3 h-3" /> Download PDF
                                 </button>
                                 <button onClick={() => handleDelete(previewDoc.id)} className="action-btn px-3 py-1.5 rounded text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
                                     Delete
