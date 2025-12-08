@@ -11,8 +11,11 @@ export const AuditLogs: React.FC = () => {
     const [filter, setFilter] = useState('');
 
     useEffect(() => {
-        const loadedLogs = storageService.getLogs();
-        setLogs(loadedLogs);
+        const loadLogs = async () => {
+             const loadedLogs = await storageService.getLogs();
+             setLogs(loadedLogs);
+        };
+        loadLogs();
     }, []);
 
     const filteredLogs = logs.filter(log => 

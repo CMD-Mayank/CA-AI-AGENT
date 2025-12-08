@@ -1,144 +1,171 @@
 
 import { ChatMessage, FirmProfile, ClientDocument, Client, ActivityLog, Invoice, Task, TimeLog, ThemeColor } from '../types';
 
-const CHAT_STORAGE_KEY_PREFIX = 'ca-agent-chat-history-';
-const DISCLAIMER_STORAGE_KEY = 'ca-agent-disclaimer-seen';
-const AUTH_STORAGE_KEY = 'ca-agent-auth-session';
-const CLIENTS_STORAGE_KEY = 'ca-agent-clients';
-const FIRM_PROFILE_KEY = 'ca-agent-firm-profile';
-const MODULE_STATE_PREFIX = 'ca-agent-module-state-';
-const DOCUMENTS_KEY = 'ca-agent-documents';
-const ACTIVITY_LOG_KEY = 'ca-agent-activity-log';
-const INVOICES_KEY_PREFIX = 'ca-agent-invoices-';
-const TASKS_KEY = 'ca-agent-tasks';
-const TIMELOGS_KEY = 'ca-agent-timelogs';
-const THEME_MODE_KEY = 'ca-agent-theme-mode'; // light/dark
-const THEME_COLOR_KEY = 'ca-agent-theme-color';
+// Local Storage Keys
+const KEYS = {
+  USER: 'ca-agent-user',
+  CLIENTS: 'ca-agent-clients',
+  TASKS: 'ca-agent-tasks',
+  DOCUMENTS: 'ca-agent-documents',
+  INVOICES: 'ca-agent-invoices',
+  LOGS: 'ca-agent-logs',
+  TIME_LOGS: 'ca-agent-time-logs',
+  FIRM_PROFILE: 'ca-agent-firm-profile',
+  THEME_MODE: 'ca-agent-theme-mode',
+  THEME_COLOR: 'ca-agent-theme-color',
+  CHAT_PREFIX: 'ca-agent-chat-history-',
+  MODULE_PREFIX: 'ca-agent-module-state-'
+};
+
+// Helper to simulate async delay for realistic feel
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const storageService = {
-  saveMessages: (clientId: string, messages: ChatMessage[]) => {
+  // --- Auth (Mock) ---
+  getUserSession: async () => {
+    const userStr = localStorage.getItem(KEYS.USER);
+    if (userStr) return JSON.parse(userStr);
+    return null;
+  },
+
+  getUserEmail: async (): Promise<string | null> => {
+    const userStr = localStorage.getItem(KEYS.USER);
+    return userStr ? JSON.parse(userStr).email : null;
+  },
+
+  signIn: async (email: string) => {
+    await delay(500);
+    // Simulate successful login
+    const user = { id: 'local-user-id', email, name: email.split('@')[0], role: 'admin' };
+    localStorage.setItem(KEYS.USER, JSON.stringify(user));
+    return { user, error: null };
+  },
+
+  signUp: async (email: string, fullName: string, firmName: string) => {
+    await delay(800);
+    const user = { id: 'local-user-id', email, name: fullName, role: 'admin' };
+    localStorage.setItem(KEYS.USER, JSON.stringify(user));
+    
+    // Initialize Firm Profile
+    const profile: FirmProfile = { name: firmName, frn: '', address: '', website: '' };
+    localStorage.setItem(KEYS.FIRM_PROFILE, JSON.stringify(profile));
+    
+    return { user, error: null };
+  },
+
+  signOut: async () => {
+    await delay(200);
+    localStorage.removeItem(KEYS.USER);
+  },
+
+  // --- Seed Data (DB Initialization) ---
+  seedDemoData: async () => {
+    const clients = storageService._get<Client>(KEYS.CLIENTS);
+    if (clients.length > 0) return; 
+
+    console.log("Seeding Local Database with Demo Content...");
+    
+    const demoClients: Client[] = [
+        { id: 'c1', name: 'TechStream Solutions Pvt Ltd', type: 'Company', pan: 'AAACT1234H', industry: 'IT Services', email: 'accounts@techstream.com', phone: '9876543210' },
+        { id: 'c2', name: 'Dr. Anjali Gupta', type: 'Individual', pan: 'BUPPG5678K', industry: 'Healthcare', email: 'anjali.g@gmail.com', phone: '9876543211' }
+    ];
+    storageService._save(KEYS.CLIENTS, demoClients);
+    
+    const demoTasks: Task[] = [
+        { id: 't1', title: 'GSTR-3B Filing (Oct)', clientId: 'c1', clientName: 'TechStream Solutions Pvt Ltd', assignee: 'Self', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], status: 'In Progress', priority: 'High' },
+        { id: 't2', title: 'Tax Audit Report', clientId: 'c1', clientName: 'TechStream Solutions Pvt Ltd', assignee: 'Rahul', dueDate: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0], status: 'To Do', priority: 'High' },
+        { id: 't3', title: 'ITR Filing Review', clientId: 'c2', clientName: 'Dr. Anjali Gupta', assignee: 'Self', dueDate: new Date(Date.now() + 86400000 * 10).toISOString().split('T')[0], status: 'Review', priority: 'Medium' }
+    ];
+    storageService._save(KEYS.TASKS, demoTasks);
+
+    const docs: ClientDocument[] = [
+        { id: 'd1', clientId: 'c1', title: 'Financial Statements FY23-24', type: 'Financial Report', content: 'Balance Sheet...\nProfit & Loss...', status: 'Approved', createdAt: Date.now() - 1000000, createdBy: 'System' },
+        { id: 'd2', clientId: 'c1', title: 'GST Notice Response Draft', type: 'Advisory Opinion', content: 'To the Proper Officer...\nRef: Notice dated...', status: 'Draft', createdAt: Date.now() - 500000, createdBy: 'System' },
+        { id: 'd3', clientId: 'c2', title: 'Tax Computation Memo', type: 'Tax Report', content: 'Computation of Total Income...', status: 'Signed', createdAt: Date.now() - 200000, createdBy: 'System', signedBy: 'CA Admin', signedAt: Date.now() }
+    ];
+    storageService._save(KEYS.DOCUMENTS, docs);
+
+    const invoices: Invoice[] = [
+        { id: 'i1', clientId: 'c1', number: 'INV-2024-001', date: new Date().toLocaleDateString(), dueDate: new Date(Date.now() + 86400000 * 15).toLocaleDateString(), total: 25000, status: 'Sent', items: [{description: 'Retainership Oct 24', amount: 25000}] },
+        { id: 'i2', clientId: 'c2', number: 'INV-2024-002', date: new Date().toLocaleDateString(), dueDate: new Date(Date.now() + 86400000 * 7).toLocaleDateString(), total: 5000, status: 'Draft', items: [{description: 'Consultation Fees', amount: 5000}] }
+    ];
+    storageService._save(KEYS.INVOICES, invoices);
+
+    const logs: ActivityLog[] = [
+        { id: 'l1', clientId: 'c1', clientName: 'TechStream Solutions Pvt Ltd', action: 'Database Initialized', timestamp: Date.now(), details: 'Demo environment setup complete' }
+    ];
+    storageService._save(KEYS.LOGS, logs);
+  },
+
+  // --- Internal Helpers ---
+  _get: <T>(key: string): T[] => {
     try {
-      localStorage.setItem(`${CHAT_STORAGE_KEY_PREFIX}${clientId}`, JSON.stringify(messages));
-    } catch (error) {
-      console.error('Failed to save messages', error);
-    }
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : [];
+    } catch { return []; }
+  },
+
+  _save: (key: string, data: any[]) => {
+    localStorage.setItem(key, JSON.stringify(data));
+  },
+
+  // --- Messages (Chat) ---
+  saveMessages: async (clientId: string, messages: ChatMessage[]) => {
+    localStorage.setItem(`${KEYS.CHAT_PREFIX}${clientId}`, JSON.stringify(messages));
   },
 
   getMessages: (clientId: string): ChatMessage[] => {
     try {
-      const stored = localStorage.getItem(`${CHAT_STORAGE_KEY_PREFIX}${clientId}`);
+      const stored = localStorage.getItem(`${KEYS.CHAT_PREFIX}${clientId}`);
       return stored ? JSON.parse(stored) : [];
     } catch (error) {
-      console.error('Failed to load messages', error);
       return [];
     }
   },
 
   clearMessages: (clientId?: string) => {
     if (clientId) {
-      localStorage.removeItem(`${CHAT_STORAGE_KEY_PREFIX}${clientId}`);
+      localStorage.removeItem(`${KEYS.CHAT_PREFIX}${clientId}`);
     } else {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith(CHAT_STORAGE_KEY_PREFIX)) {
-          localStorage.removeItem(key);
-        }
-      });
+        Object.keys(localStorage).forEach(key => {
+            if(key.startsWith(KEYS.CHAT_PREFIX)) localStorage.removeItem(key);
+        });
     }
   },
 
-  hasSeenDisclaimer: (): boolean => {
-    return localStorage.getItem(DISCLAIMER_STORAGE_KEY) === 'true';
-  },
-
-  setDisclaimerSeen: () => {
-    localStorage.setItem(DISCLAIMER_STORAGE_KEY, 'true');
-  },
-
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem(AUTH_STORAGE_KEY);
-  },
-
-  login: (email: string) => {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ email, timestamp: Date.now() }));
-  },
-
-  logout: () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-  },
-  
-  getUserEmail: (): string | null => {
-      const session = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (session) {
-          return JSON.parse(session).email;
-      }
-      return null;
-  },
-
   // --- Client Management ---
-  saveClients: (clients: Client[]) => {
-      try {
-          localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
-      } catch (error) {
-          console.error('Failed to save clients', error);
-      }
+  getClients: async (): Promise<Client[]> => storageService._get<Client>(KEYS.CLIENTS),
+
+  addClient: async (client: Client): Promise<Client | null> => {
+      const clients = storageService._get<Client>(KEYS.CLIENTS);
+      const newClient = { ...client, id: Date.now().toString() };
+      clients.unshift(newClient);
+      storageService._save(KEYS.CLIENTS, clients);
+      return newClient;
   },
 
-  getClients: (): Client[] | null => {
-      try {
-          const stored = localStorage.getItem(CLIENTS_STORAGE_KEY);
-          return stored ? JSON.parse(stored) : null;
-      } catch (error) {
-          return null;
-      }
-  },
-
-  updateClient: (updatedClient: Client) => {
-      const clients = storageService.getClients() || [];
+  updateClient: async (updatedClient: Client) => {
+      const clients = storageService._get<Client>(KEYS.CLIENTS);
       const index = clients.findIndex(c => c.id === updatedClient.id);
       if (index !== -1) {
           clients[index] = updatedClient;
-          storageService.saveClients(clients);
+          storageService._save(KEYS.CLIENTS, clients);
       }
   },
 
-  deleteClient: (clientId: string) => {
-      // 1. Remove from Clients List
-      const clients = storageService.getClients() || [];
-      const filteredClients = clients.filter(c => c.id !== clientId);
-      storageService.saveClients(filteredClients);
-
-      // 2. Remove Chat History
-      localStorage.removeItem(`${CHAT_STORAGE_KEY_PREFIX}${clientId}`);
-
-      // 3. Remove Module States
-      // (Simple iteration as keys are predictable, or just leave them as orphaned harmless data)
-      
-      // 4. Remove Documents
-      const docs = storageService.getAllDocuments();
-      const filteredDocs = docs.filter(d => d.clientId !== clientId);
-      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(filteredDocs));
-      
-      // 5. Remove Invoices
-      localStorage.removeItem(`${INVOICES_KEY_PREFIX}${clientId}`);
-      
-      // 6. Remove Tasks
-      const tasks = storageService.getTasks();
-      const filteredTasks = tasks.filter(t => t.clientId !== clientId);
-      storageService.saveTasks(filteredTasks);
+  deleteClient: async (clientId: string) => {
+      const clients = storageService._get<Client>(KEYS.CLIENTS).filter(c => c.id !== clientId);
+      storageService._save(KEYS.CLIENTS, clients);
   },
 
   // --- Firm Profile ---
   saveFirmProfile: (profile: FirmProfile) => {
-      try {
-          localStorage.setItem(FIRM_PROFILE_KEY, JSON.stringify(profile));
-      } catch (error) {
-          console.error('Failed to save firm profile', error);
-      }
+      localStorage.setItem(KEYS.FIRM_PROFILE, JSON.stringify(profile));
   },
 
   getFirmProfile: (): FirmProfile | null => {
       try {
-          const stored = localStorage.getItem(FIRM_PROFILE_KEY);
+          const stored = localStorage.getItem(KEYS.FIRM_PROFILE);
           return stored ? JSON.parse(stored) : null;
       } catch (error) {
           return null;
@@ -147,16 +174,12 @@ export const storageService = {
 
   // --- Module Persistence ---
   saveModuleState: (clientId: string, module: string, data: any) => {
-      try {
-          localStorage.setItem(`${MODULE_STATE_PREFIX}${clientId}-${module}`, JSON.stringify(data));
-      } catch (error) {
-          console.error(`Failed to save state for ${module}`, error);
-      }
+      localStorage.setItem(`${KEYS.MODULE_PREFIX}${clientId}-${module}`, JSON.stringify(data));
   },
 
   getModuleState: (clientId: string, module: string): any | null => {
       try {
-          const stored = localStorage.getItem(`${MODULE_STATE_PREFIX}${clientId}-${module}`);
+          const stored = localStorage.getItem(`${KEYS.MODULE_PREFIX}${clientId}-${module}`);
           return stored ? JSON.parse(stored) : null;
       } catch (error) {
           return null;
@@ -164,191 +187,175 @@ export const storageService = {
   },
 
   // --- Document Management ---
-  saveDocument: (doc: ClientDocument) => {
-      try {
-          const docs = storageService.getAllDocuments();
-          docs.push(doc);
-          localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(docs));
-          storageService.logActivity({
-              id: Date.now().toString(),
-              clientId: doc.clientId,
-              clientName: 'System', // Ideally pass client name
-              action: 'Document Generated',
-              timestamp: Date.now(),
-              details: doc.title
-          });
-      } catch (error) {
-          console.error('Failed to save document', error);
-      }
+  saveDocument: async (doc: ClientDocument) => {
+      const docs = storageService._get<ClientDocument>(KEYS.DOCUMENTS);
+      docs.unshift(doc);
+      storageService._save(KEYS.DOCUMENTS, docs);
+      
+      await storageService.logActivity({
+          id: Date.now().toString(),
+          clientId: doc.clientId,
+          clientName: 'System', 
+          action: 'Document Generated',
+          timestamp: Date.now(),
+          details: doc.title
+      });
   },
   
-  updateDocument: (updatedDoc: ClientDocument) => {
-      const docs = storageService.getAllDocuments();
+  updateDocument: async (updatedDoc: ClientDocument) => {
+      const docs = storageService._get<ClientDocument>(KEYS.DOCUMENTS);
       const index = docs.findIndex(d => d.id === updatedDoc.id);
       if (index !== -1) {
           docs[index] = updatedDoc;
-          localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(docs));
+          storageService._save(KEYS.DOCUMENTS, docs);
       }
   },
 
-  getDocumentsForClient: (clientId: string): ClientDocument[] => {
-      const docs = storageService.getAllDocuments();
-      return docs.filter(d => d.clientId === clientId).sort((a, b) => b.createdAt - a.createdAt);
+  getDocumentsForClient: async (clientId: string): Promise<ClientDocument[]> => {
+      return storageService._get<ClientDocument>(KEYS.DOCUMENTS).filter(d => d.clientId === clientId);
   },
 
-  getAllDocuments: (): ClientDocument[] => {
-      try {
-          const stored = localStorage.getItem(DOCUMENTS_KEY);
-          return stored ? JSON.parse(stored) : [];
-      } catch (error) {
-          return [];
-      }
+  getAllDocuments: async (): Promise<ClientDocument[]> => {
+      return storageService._get<ClientDocument>(KEYS.DOCUMENTS);
   },
   
-  deleteDocument: (docId: string) => {
-      const docs = storageService.getAllDocuments();
-      const filtered = docs.filter(d => d.id !== docId);
-      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(filtered));
+  deleteDocument: async (docId: string) => {
+      const docs = storageService._get<ClientDocument>(KEYS.DOCUMENTS).filter(d => d.id !== docId);
+      storageService._save(KEYS.DOCUMENTS, docs);
   },
 
   // --- Activity Logging ---
-  logActivity: (log: ActivityLog) => {
-      try {
-          const logs = storageService.getLogs();
-          logs.unshift(log); // Add to top
-          // Keep max 50 logs
-          const trimmedLogs = logs.slice(0, 50);
-          localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(trimmedLogs));
-      } catch (error) {
-          console.error('Failed to log activity', error);
-      }
+  logActivity: async (log: ActivityLog) => {
+      const logs = storageService._get<ActivityLog>(KEYS.LOGS);
+      logs.unshift(log);
+      if (logs.length > 100) logs.pop(); // Limit logs
+      storageService._save(KEYS.LOGS, logs);
   },
 
-  getLogs: (): ActivityLog[] => {
-      try {
-          const stored = localStorage.getItem(ACTIVITY_LOG_KEY);
-          return stored ? JSON.parse(stored) : [];
-      } catch (error) {
-          return [];
-      }
+  getLogs: async (): Promise<ActivityLog[]> => {
+      return storageService._get<ActivityLog>(KEYS.LOGS);
   },
 
   // --- Invoicing ---
-  saveInvoices: (clientId: string, invoices: Invoice[]) => {
-      localStorage.setItem(`${INVOICES_KEY_PREFIX}${clientId}`, JSON.stringify(invoices));
+  createInvoice: async (invoice: Invoice) => {
+      const invs = storageService._get<Invoice>(KEYS.INVOICES);
+      invs.unshift(invoice);
+      storageService._save(KEYS.INVOICES, invs);
   },
 
-  getInvoices: (clientId: string): Invoice[] => {
-      const stored = localStorage.getItem(`${INVOICES_KEY_PREFIX}${clientId}`);
-      return stored ? JSON.parse(stored) : [];
+  updateInvoice: async (invoice: Invoice) => {
+      const invs = storageService._get<Invoice>(KEYS.INVOICES);
+      const index = invs.findIndex(i => i.id === invoice.id);
+      if (index !== -1) {
+          invs[index] = invoice;
+          storageService._save(KEYS.INVOICES, invs);
+      }
+  },
+
+  getInvoices: async (clientId: string): Promise<Invoice[]> => {
+      return storageService._get<Invoice>(KEYS.INVOICES).filter(i => i.clientId === clientId);
   },
   
   // --- Tasks Management ---
-  saveTasks: (tasks: Task[]) => {
-      localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+  addTask: async (task: Task) => {
+      const tasks = storageService._get<Task>(KEYS.TASKS);
+      tasks.push(task);
+      storageService._save(KEYS.TASKS, tasks);
   },
 
-  getTasks: (): Task[] => {
-      try {
-          const stored = localStorage.getItem(TASKS_KEY);
-          return stored ? JSON.parse(stored) : [];
-      } catch (error) {
-          return [];
+  updateTask: async (updatedTask: Task) => {
+      const tasks = storageService._get<Task>(KEYS.TASKS);
+      const index = tasks.findIndex(t => t.id === updatedTask.id);
+      if (index !== -1) {
+          tasks[index] = updatedTask;
+          storageService._save(KEYS.TASKS, tasks);
       }
   },
 
-  // --- Timesheets & Time Tracking ---
-  saveTimeLog: (log: TimeLog) => {
-      const logs = storageService.getTimeLogs();
-      logs.push(log);
-      localStorage.setItem(TIMELOGS_KEY, JSON.stringify(logs));
-  },
-  
-  getTimeLogs: (): TimeLog[] => {
-      try {
-          const stored = localStorage.getItem(TIMELOGS_KEY);
-          return stored ? JSON.parse(stored) : [];
-      } catch (error) {
-          return [];
-      }
-  },
-  
-  getUnbilledTimeLogs: (clientId: string): TimeLog[] => {
-      const logs = storageService.getTimeLogs();
-      return logs.filter(l => l.clientId === clientId && l.billable && !l.billed);
-  },
-  
-  markTimeLogsAsBilled: (logIds: string[]) => {
-      const logs = storageService.getTimeLogs();
-      const updatedLogs = logs.map(l => logIds.includes(l.id) ? { ...l, billed: true } : l);
-      localStorage.setItem(TIMELOGS_KEY, JSON.stringify(updatedLogs));
+  deleteTask: async (taskId: string) => {
+      const tasks = storageService._get<Task>(KEYS.TASKS).filter(t => t.id !== taskId);
+      storageService._save(KEYS.TASKS, tasks);
   },
 
-  // --- Backup & Restore ---
-  createBackup: (): string => {
-      const data: Record<string, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('ca-agent-')) {
-              const value = localStorage.getItem(key);
-              if (value) data[key] = value;
-          }
-      }
-      return JSON.stringify(data);
+  getTasks: async (): Promise<Task[]> => {
+      return storageService._get<Task>(KEYS.TASKS);
   },
 
-  restoreBackup: (jsonString: string): boolean => {
+  // --- Timesheets ---
+  saveTimeLog: async (log: TimeLog) => {
+      const logs = storageService._get<TimeLog>(KEYS.TIME_LOGS);
+      logs.unshift(log);
+      storageService._save(KEYS.TIME_LOGS, logs);
+  },
+  
+  getTimeLogs: async (): Promise<TimeLog[]> => {
+      return storageService._get<TimeLog>(KEYS.TIME_LOGS);
+  },
+  
+  getUnbilledTimeLogs: async (clientId: string): Promise<TimeLog[]> => {
+      return storageService._get<TimeLog>(KEYS.TIME_LOGS)
+        .filter(l => l.clientId === clientId && l.billable && !l.billed);
+  },
+  
+  markTimeLogsAsBilled: async (logIds: string[]) => {
+      const logs = storageService._get<TimeLog>(KEYS.TIME_LOGS);
+      logs.forEach(l => {
+          if (logIds.includes(l.id)) l.billed = true;
+      });
+      storageService._save(KEYS.TIME_LOGS, logs);
+  },
+
+  // --- Theme Management ---
+  saveTheme: (isDark: boolean) => {
+      localStorage.setItem(KEYS.THEME_MODE, isDark ? 'dark' : 'light');
+  },
+
+  getTheme: (): boolean => {
+      return localStorage.getItem(KEYS.THEME_MODE) === 'dark';
+  },
+
+  saveThemeColor: (color: ThemeColor) => {
+      localStorage.setItem(KEYS.THEME_COLOR, color);
+  },
+
+  getThemeColor: (): ThemeColor => {
+      return (localStorage.getItem(KEYS.THEME_COLOR) as ThemeColor) || 'teal';
+  },
+  
+  // --- Stats Helper ---
+  getDashboardStats: async () => {
+      const clients = storageService._get(KEYS.CLIENTS).length;
+      const docs = storageService._get(KEYS.DOCUMENTS).length;
+      const logs = storageService._get<ActivityLog>(KEYS.LOGS).slice(0, 10);
+      const totalBilled = storageService._get<Invoice>(KEYS.INVOICES).reduce((sum, i) => sum + i.total, 0);
+
+      return {
+          totalClients: clients,
+          totalDocuments: docs,
+          recentActivity: logs,
+          totalBilled
+      };
+  },
+  
+  setDisclaimerSeen: () => localStorage.setItem('disclaimer_seen', 'true'),
+  hasSeenDisclaimer: () => localStorage.getItem('disclaimer_seen') === 'true',
+  
+  createBackup: () => JSON.stringify(localStorage),
+  restoreBackup: (content: string) => {
       try {
-          const data = JSON.parse(jsonString);
-          if (typeof data !== 'object') return false;
+          const data = JSON.parse(content);
+          if (!data || typeof data !== 'object') return false;
           
+          localStorage.clear();
           Object.keys(data).forEach(key => {
               if (key.startsWith('ca-agent-')) {
                   localStorage.setItem(key, data[key]);
               }
           });
           return true;
-      } catch (error) {
-          console.error('Restore failed', error);
+      } catch (e) {
+          console.error(e);
           return false;
       }
-  },
-  
-  // --- Theme Management ---
-  saveTheme: (isDark: boolean) => {
-      localStorage.setItem(THEME_MODE_KEY, isDark ? 'dark' : 'light');
-  },
-
-  getTheme: (): boolean => {
-      return localStorage.getItem(THEME_MODE_KEY) === 'dark';
-  },
-
-  saveThemeColor: (color: ThemeColor) => {
-      localStorage.setItem(THEME_COLOR_KEY, color);
-  },
-
-  getThemeColor: (): ThemeColor => {
-      return (localStorage.getItem(THEME_COLOR_KEY) as ThemeColor) || 'teal';
-  },
-  
-  // --- Stats Helper ---
-  getDashboardStats: () => {
-      const clients = storageService.getClients() || [];
-      const docs = storageService.getAllDocuments();
-      const logs = storageService.getLogs();
-      
-      // Calculate Invoice Totals across all clients
-      let totalBilled = 0;
-      clients.forEach(c => {
-          const invoices = storageService.getInvoices(c.id);
-          totalBilled += invoices.reduce((sum, inv) => sum + inv.total, 0);
-      });
-
-      return {
-          totalClients: clients.length,
-          totalDocuments: docs.length,
-          recentActivity: logs.slice(0, 5),
-          totalBilled
-      };
   }
 };

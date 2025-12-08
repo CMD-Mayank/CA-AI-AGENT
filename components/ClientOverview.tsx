@@ -8,6 +8,7 @@ import { ClipboardCheckIcon } from './icons/ClipboardCheckIcon';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { CreditCardIcon } from './icons/CreditCardIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { BuildingIcon } from './icons/BuildingIcon';
 
 interface ClientOverviewProps {
     client: Client;
@@ -19,13 +20,23 @@ export const ClientOverview: React.FC<ClientOverviewProps> = ({ client, onChange
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [docs, setDocs] = useState<ClientDocument[]>([]);
     
+    // In a real app, this state would come from the PortalSync module or shared storage
+    // Simulating "Connected" state for demo visual
+    const [portalStatus, setPortalStatus] = useState('Connected'); 
+    
     useEffect(() => {
-        // Load Client Specific Data
-        const allTasks = storageService.getTasks();
-        setTasks(allTasks.filter(t => t.clientId === client.id && t.status !== 'Done'));
-        
-        setInvoices(storageService.getInvoices(client.id));
-        setDocs(storageService.getDocumentsForClient(client.id).slice(0, 3));
+        const loadData = async () => {
+            // Load Client Specific Data
+            const allTasks = await storageService.getTasks();
+            setTasks(allTasks.filter(t => t.clientId === client.id && t.status !== 'Done'));
+            
+            const clientInvoices = await storageService.getInvoices(client.id);
+            setInvoices(clientInvoices);
+
+            const clientDocs = await storageService.getDocumentsForClient(client.id);
+            setDocs(clientDocs.slice(0, 3));
+        };
+        loadData();
     }, [client.id]);
 
     const formatCurrency = (amount: number) => {
@@ -103,8 +114,8 @@ export const ClientOverview: React.FC<ClientOverviewProps> = ({ client, onChange
                 </div>
 
                 {/* AI Assistant Quick Prompt */}
-                <div className="lg:row-span-2">
-                    <div className="bg-teal-700 rounded-xl p-6 text-white shadow-lg h-full relative overflow-hidden">
+                <div className="lg:row-span-2 flex flex-col gap-6">
+                    <div className="bg-teal-700 rounded-xl p-6 text-white shadow-lg relative overflow-hidden flex-1">
                         <SparklesIcon className="w-12 h-12 absolute -top-2 -right-2 text-teal-500 opacity-50" />
                         <h3 className="font-bold text-lg mb-2 relative z-10">Advisory Copilot</h3>
                         <p className="text-teal-100 text-sm mb-6 relative z-10">
@@ -116,6 +127,35 @@ export const ClientOverview: React.FC<ClientOverviewProps> = ({ client, onChange
                         >
                             Start Chat Session
                         </button>
+                    </div>
+
+                    {/* Portal Status Widget (New) */}
+                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 shadow-sm">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                <BuildingIcon className="w-4 h-4 text-gray-400" /> Live Portal Status
+                            </h4>
+                            <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">GST Return Status</span>
+                                <span className="text-green-600 font-medium">Filed</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Cash Ledger</span>
+                                <span className="text-gray-800 dark:text-white font-medium">₹45,200</span>
+                            </div>
+                            <button 
+                                onClick={() => onChangeView(View.Portal)}
+                                className="w-full mt-2 text-xs text-primary-600 font-bold hover:underline text-center"
+                            >
+                                View Live Ledgers &rarr;
+                            </button>
+                        </div>
                     </div>
                 </div>
 

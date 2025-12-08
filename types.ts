@@ -37,6 +37,9 @@ export enum View {
     Settings = 'Settings',
     AuditLog = 'AuditLog',
     Timesheets = 'Timesheets',
+    Help = 'Help',
+    Portal = 'Portal',
+    SuperAdmin = 'SuperAdmin',
 }
 
 export type ThemeColor = 'teal' | 'blue' | 'indigo' | 'rose' | 'orange' | 'violet';
@@ -59,11 +62,19 @@ export interface FirmProfile {
     website: string;
 }
 
+export interface Firm {
+    id: string;
+    name: string;
+    frn?: string;
+    subscription_status: string;
+    created_at: string;
+}
+
 export interface ClientDocument {
     id: string;
     clientId: string;
     title: string;
-    type: 'Tax Report' | 'Compliance Audit' | 'Financial Forecast' | 'Advisory Opinion' | 'Invoice';
+    type: 'Tax Report' | 'Compliance Audit' | 'Financial Forecast' | 'Advisory Opinion' | 'Invoice' | 'Financial Report';
     content: string;
     createdAt: number;
     createdBy: string; // User email or 'AI'

@@ -11,6 +11,8 @@ import { NewsIcon } from './icons/NewsIcon';
 import { ShieldCheckIcon } from './icons/ShieldCheckIcon';
 import { HomeIcon } from './icons/HomeIcon';
 import { ClockIcon } from './icons/ClockIcon';
+import { QuestionMarkIcon } from './icons/QuestionMarkIcon';
+import { BuildingIcon } from './icons/BuildingIcon';
 import { View, Client, FirmProfile } from '../types';
 
 
@@ -33,6 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
     { name: 'Firm Dashboard', icon: <DashboardIcon />, view: View.Dashboard },
     { name: 'Workflow & Tasks', icon: <ClipboardCheckIcon />, view: View.Tasks },
     { name: 'Timesheets & Profit', icon: <ClockIcon />, view: View.Timesheets },
+    { name: 'Govt Portals', icon: <BuildingIcon />, view: View.Portal }, // New Item
     { name: 'Knowledge Bank', icon: <NewsIcon />, view: View.Regulatory },
     { name: 'Tax Computation', icon: <DocumentIcon />, view: View.TaxFiling },
     { name: 'Compliance & Audit', icon: <BriefcaseIcon />, view: View.Compliance },
@@ -43,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
 
   const containerClasses = `
     fixed lg:relative top-0 left-0 h-full w-72 bg-white dark:bg-slate-800 
-    flex flex-col border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 z-30
+    flex flex-col border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 z-50 lg:z-10
     ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
   `;
 
@@ -61,11 +64,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
         {/* White-Labeled Firm Header */}
         <div className="flex items-center space-x-3 mb-8">
             <div className="w-10 h-10 bg-primary-700 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-md flex-shrink-0">
-                {firmProfile?.name ? firmProfile.name.charAt(0).toUpperCase() : 'CA'}
+                {firmProfile?.name ? firmProfile.name.charAt(0).toUpperCase() : 'AE'}
             </div>
             <div className="overflow-hidden">
                 <span className="font-bold text-lg text-gray-800 dark:text-white block leading-tight truncate" title={firmProfile?.name}>
-                    {firmProfile?.name || 'CA AI Associate'}
+                    {firmProfile?.name || 'AuditEra'}
                 </span>
                 <span className="text-[10px] text-gray-500 dark:text-slate-400 font-medium uppercase tracking-wide">
                     {firmProfile?.frn ? `FRN: ${firmProfile.frn}` : 'Enterprise Edition'}
@@ -164,6 +167,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
               >
                 <span className="mr-3 w-5 h-5 opacity-80"><SettingsIcon /></span>
                 Admin Console
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setActiveView(View.Help)}
+                className={`w-full flex items-center p-3 rounded-lg text-sm font-medium transition-colors ${
+                  activeView === View.Help
+                    ? 'bg-primary-50 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700/50'
+                }`}
+              >
+                <span className="mr-3 w-5 h-5 opacity-80"><QuestionMarkIcon /></span>
+                Help & Support
               </button>
             </li>
         </ul>

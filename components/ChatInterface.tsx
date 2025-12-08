@@ -13,6 +13,7 @@ import { storageService } from '../services/storage';
 
 interface ChatInterfaceProps {
     client?: Client;
+    initialPrompt?: string;
 }
 
 const PROMPT_TEMPLATES: PromptTemplate[] = [
@@ -57,7 +58,7 @@ const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
 };
 
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ client, initialPrompt }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -75,6 +76,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
           setMessages(loadedMessages);
       }
   }, [client?.id]);
+  
+  // Handle auto-trigger from other modules
+  useEffect(() => {
+      if(initialPrompt && !isLoading) {
+          setInput(initialPrompt);
+      }
+  }, [initialPrompt]);
 
   // Save messages whenever they change
   useEffect(() => {
@@ -327,7 +335,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
             <div className="inline-block p-4 bg-primary-100 dark:bg-primary-900/50 rounded-full">
               <SparklesIcon className="text-primary-600 dark:text-primary-300 w-8 h-8" />
             </div>
-            <h2 className="mt-4 text-2xl font-semibold text-gray-800 dark:text-gray-200">CA AI Associate</h2>
+            <h2 className="mt-4 text-2xl font-semibold text-gray-800 dark:text-gray-200">AuditEra</h2>
             <p className="mt-2 text-gray-500 dark:text-slate-400">Ready to assist with client {client?.name || 'files'}.</p>
             
             <div className="mt-8 flex flex-wrap justify-center gap-3 max-w-2xl mx-auto">
@@ -355,117 +363,105 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ client }) => {
                   : 'bg-white dark:bg-slate-700 text-gray-800 dark:text-slate-200 rounded-bl-none border border-gray-200 dark:border-slate-600'
               }`}>
                {msg.sender === MessageSender.AI && !isLoading && (
-                  <button onClick={() => handleCopy(msg.text)} className="absolute top-2 right-2 p-1.5 text-gray-400 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-600 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  <button onClick={() => handleCopy(msg.text)} className="absolute top-2 right-2 p-1.5 text-gray-400 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-600 rounded opacity-0 group-hover:opacity-100 transition-opacity" title="Copy to clipboard">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
                )}
-               {isLoading && index === messages.length - 1 ? (
-                   <div className="flex items-center space-x-2">
-                       <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-                       <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                       <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-                   </div>
-               ) : (
-                  <MarkdownRenderer text={msg.text} />
-               )}
-               {msg.sender === MessageSender.USER && msg.file && (
-                    <div className="mt-3 p-2.5 bg-primary-800/50 rounded-lg flex items-center gap-3 text-white border border-primary-600">
-                        <DocumentIcon className="w-5 h-5 flex-shrink-0" />
-                        <span className="text-sm font-medium truncate">{msg.file.name}</span>
-                    </div>
-                )}
-            </div>
-             {msg.sender === MessageSender.USER && (
-                <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-slate-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <UserIcon />
+              <MarkdownRenderer text={msg.text} />
+              {msg.file && (
+                <div className="mt-3 flex items-center gap-2 text-xs bg-black/10 dark:bg-black/20 p-2 rounded">
+                    <AttachmentIcon className="w-4 h-4" />
+                    <span>{msg.file.name}</span>
                 </div>
+              )}
+            </div>
+            {msg.sender === MessageSender.USER && (
+              <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-slate-600 flex items-center justify-center flex-shrink-0 text-gray-500 dark:text-slate-300">
+                <UserIcon className="w-5 h-5" />
+              </div>
             )}
           </div>
         ))}
+        {isLoading && (
+          <div className="flex items-start gap-4 animate-pulse">
+            <div className="w-9 h-9 rounded-full bg-primary-700 flex items-center justify-center flex-shrink-0 text-white">
+                <SparklesIcon className="w-5 h-5"/>
+            </div>
+            <div className="bg-white dark:bg-slate-700 p-4 rounded-2xl rounded-bl-none shadow-sm border border-gray-200 dark:border-slate-600">
+              <div className="flex space-x-2">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={chatEndRef} />
       </div>
 
-      <div className="p-4 md:p-6 bg-white dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-700">
-        <div className="max-w-4xl mx-auto">
-             {file && (
-                <div className="mb-2 flex items-center justify-between p-2 bg-gray-100 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-slate-200">
-                        <AttachmentIcon className="w-4 h-4 flex-shrink-0" />
-                        <span className="truncate">{file.name}</span>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={removeFile}
-                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
-                        aria-label="Remove file"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+      <div className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700 sticky bottom-0 z-10">
+        <form onSubmit={handleFormSubmit} className="relative flex items-end gap-2 max-w-4xl mx-auto">
+          <input
+            type="file"
+            id="file-upload"
+            className="hidden"
+            onChange={handleFileChange}
+            ref={fileInputRef}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="p-3 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+            title="Upload Document"
+          >
+            <AttachmentIcon className="w-6 h-6" />
+          </button>
+          
+          <div className="flex-1 relative">
+              {file && (
+                <div className="absolute bottom-full mb-2 left-0 right-0 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-2 flex items-center justify-between text-sm text-primary-700 dark:text-primary-200">
+                    <span className="truncate flex items-center gap-2">
+                        <DocumentIcon className="w-4 h-4"/> {file.name}
+                    </span>
+                    <button type="button" onClick={removeFile} className="hover:text-red-500">&times;</button>
                 </div>
-            )}
-            <form onSubmit={handleFormSubmit} className="relative">
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".pdf,.docx,.csv,.jpg,.jpeg,.png"
-                disabled={isLoading}
-            />
-            <textarea
+              )}
+              <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                placeholder={isListening ? "Listening..." : "Ask a query, draft a notice, or analyze a file..."}
+                className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-xl py-3 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none dark:text-white placeholder-gray-400 dark:placeholder-slate-500 shadow-sm"
+                rows={1}
                 onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleFormSubmit(e);
-                }
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend(input);
+                    }
                 }}
-                placeholder={`Ask complicated questions...`}
-                className="w-full p-4 pl-14 pr-32 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none shadow-sm transition-shadow"
-                rows={2}
-                disabled={isLoading}
-            />
-            <button
+              />
+              <button
                 type="button"
-                onClick={() => setShowTemplates(!showTemplates)}
-                className={`absolute left-3 top-3 p-1.5 rounded-lg transition-colors ${showTemplates ? 'bg-primary-100 text-primary-700' : 'text-gray-400 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-slate-700'}`}
-                title="Prompt Library"
-            >
-                <TemplateIcon className="w-5 h-5" />
-            </button>
-            
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                 <button
-                    type="button"
-                    onClick={toggleDictation}
-                    className={`p-2.5 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'}`}
-                    title="Voice Dictation"
-                >
-                    <MicrophoneIcon className="w-5 h-5" />
-                </button>
-                 <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isLoading}
-                    className="p-2.5 rounded-full text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:cursor-not-allowed transition-colors"
-                    aria-label="Attach file"
-                >
-                    <AttachmentIcon className="w-5 h-5" />
-                </button>
-                <button
-                    type="submit"
-                    disabled={isLoading || (!input.trim() && !file)}
-                    className="p-2.5 rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:bg-gray-400 dark:disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors shadow-sm"
-                    aria-label="Send message"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                    </svg>
-                </button>
-            </div>
-            </form>
-        </div>
+                onClick={toggleDictation}
+                className={`absolute right-3 bottom-3 p-1 rounded-full transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-gray-400 hover:text-primary-600'}`}
+                title="Voice Dictation"
+              >
+                  <MicrophoneIcon className="w-5 h-5" />
+              </button>
+          </div>
+          
+          <button
+            type="submit"
+            disabled={(!input.trim() && !file) || isLoading}
+            className="p-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all transform active:scale-95"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </button>
+        </form>
+        <p className="text-center text-[10px] text-gray-400 dark:text-slate-500 mt-2">
+            AuditEra may produce inaccurate information. Verify important information.
+        </p>
       </div>
     </div>
   );

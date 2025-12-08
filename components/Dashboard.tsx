@@ -26,69 +26,72 @@ const Dashboard: React.FC<DashboardProps> = ({ client }) => {
     const [chartPoints, setChartPoints] = useState<string>('');
 
     useEffect(() => {
-        // 1. Load Real Data
-        const dashboardData = storageService.getDashboardStats();
-        setStats({
-            totalClients: dashboardData.totalClients,
-            totalDocuments: dashboardData.totalDocuments,
-            totalBilled: dashboardData.totalBilled
-        });
-        setRecentActivity(dashboardData.recentActivity);
-        
-        // 2. Load & Sort Tasks for "Deadlines"
-        const allTasks = storageService.getTasks();
-        const pendingTasks = allTasks
-            .filter(t => t.status !== 'Done')
-            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-            .slice(0, 4); // Top 4 upcoming
-        setUpcomingTasks(pendingTasks);
+        const loadData = async () => {
+            // 1. Load Real Data from Supabase
+            const dashboardData = await storageService.getDashboardStats();
+            setStats({
+                totalClients: dashboardData.totalClients,
+                totalDocuments: dashboardData.totalDocuments,
+                totalBilled: dashboardData.totalBilled
+            });
+            setRecentActivity(dashboardData.recentActivity);
+            
+            // 2. Load & Sort Tasks for "Deadlines"
+            const allTasks = await storageService.getTasks();
+            const pendingTasks = allTasks
+                .filter(t => t.status !== 'Done')
+                .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                .slice(0, 4); 
+            setUpcomingTasks(pendingTasks);
 
-        // 3. Calculate Dynamic Revenue Chart Data
-        const clients = storageService.getClients() || [];
-        let allInvoices: Invoice[] = [];
-        clients.forEach(c => {
-            allInvoices = [...allInvoices, ...storageService.getInvoices(c.id)];
-        });
-        
-        // Group invoices by month (Last 6 months)
-        const months = 6;
-        const now = new Date();
-        const monthlyData = new Array(months).fill(0);
-        
-        allInvoices.forEach(inv => {
-            const invDate = new Date(inv.date); // Assumes date format string works with Date constructor or is ISO
-            // Simple check if invoice is within last 6 months
-            const diffMonths = (now.getFullYear() - invDate.getFullYear()) * 12 + (now.getMonth() - invDate.getMonth());
-            if (diffMonths >= 0 && diffMonths < months) {
-                monthlyData[months - 1 - diffMonths] += inv.total;
+            // 3. Calculate Dynamic Revenue Chart Data (Simplified for async)
+            // Ideally should be a DB aggregation, but calculating client-side for demo parity
+            const clients = await storageService.getClients();
+            let allInvoices: Invoice[] = [];
+            for (const c of clients) {
+                const invs = await storageService.getInvoices(c.id);
+                allInvoices = [...allInvoices, ...invs];
             }
-        });
+            
+            const months = 6;
+            const now = new Date();
+            const monthlyData = new Array(months).fill(0);
+            
+            allInvoices.forEach(inv => {
+                const invDate = new Date(inv.date); 
+                const diffMonths = (now.getFullYear() - invDate.getFullYear()) * 12 + (now.getMonth() - invDate.getMonth());
+                if (diffMonths >= 0 && diffMonths < months) {
+                    monthlyData[months - 1 - diffMonths] += inv.total;
+                }
+            });
+            
+            const dataToGraph = monthlyData.some(x => x > 0) ? monthlyData : [5000, 12000, 8000, 15000, 20000, 25000];
+            const maxVal = Math.max(...dataToGraph);
+            const points = dataToGraph.map((val, index) => `${index * 80},${100 - (val / (maxVal || 1)) * 80}`).join(' ');
+            setChartPoints(points);
+        };
         
-        // Add a base value if empty so chart isn't flat line 0
-        const dataToGraph = monthlyData.some(x => x > 0) ? monthlyData : [5000, 12000, 8000, 15000, 20000, 25000];
-        
-        // Convert to SVG points
-        const maxVal = Math.max(...dataToGraph);
-        const points = dataToGraph.map((val, index) => `${index * 80},${100 - (val / (maxVal || 1)) * 80}`).join(' ');
-        setChartPoints(points);
+        loadData();
+    }, []);
 
-        // 4. AI Insights based on REAL data
-        const fetchInsight = async () => {
-            // Check cache
+    useEffect(() => {
+         const fetchInsight = async () => {
             const cachedState = storageService.getModuleState('global', 'DashboardInsight');
-            if (cachedState && (Date.now() - cachedState.timestamp < 3600000)) { // 1 hour cache
+            if (cachedState && (Date.now() - cachedState.timestamp < 3600000)) { 
                 setAiInsight(cachedState.text);
                 return;
             }
 
             setIsLoadingInsight(true);
+            // Re-fetch vital stats for the prompt to be accurate
+            const dashboardData = await storageService.getDashboardStats();
+            
             const prompt = `
                 You are a Practice Manager for a CA Firm.
                 Current Stats:
                 - Active Clients: ${dashboardData.totalClients}
                 - Documents Generated: ${dashboardData.totalDocuments}
                 - Total Revenue Billed: ₹${dashboardData.totalBilled}
-                - Upcoming Deadlines: ${pendingTasks.length}
                 
                 Provide a brief (2 sentences) strategic update or motivating insight for the Principal CA.
                 Focus on growth or efficiency.
@@ -109,8 +112,10 @@ const Dashboard: React.FC<DashboardProps> = ({ client }) => {
                 setIsLoadingInsight(false);
             }
         };
-
-        fetchInsight();
+        
+        // Wait a bit for stats to populate then fetch AI
+        const t = setTimeout(fetchInsight, 1000);
+        return () => clearTimeout(t);
     }, []);
 
     const formatCurrency = (amount: number) => {

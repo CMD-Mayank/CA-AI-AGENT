@@ -27,11 +27,15 @@ const Billing: React.FC<BillingProps> = ({ client, firmProfile }) => {
     const [importedLogIds, setImportedLogIds] = useState<string[]>([]);
 
     useEffect(() => {
-        const loaded = storageService.getInvoices(client.id);
-        setInvoices(loaded);
-        
-        // Fetch unbilled time
-        setUnbilledLogs(storageService.getUnbilledTimeLogs(client.id));
+        const loadData = async () => {
+            const loaded = await storageService.getInvoices(client.id);
+            setInvoices(loaded);
+            
+            // Fetch unbilled time
+            const logs = await storageService.getUnbilledTimeLogs(client.id);
+            setUnbilledLogs(logs);
+        };
+        loadData();
     }, [client.id]);
 
     const handleAddItem = () => {
@@ -42,7 +46,6 @@ const Billing: React.FC<BillingProps> = ({ client, firmProfile }) => {
     const handleImportTime = () => {
         if (unbilledLogs.length === 0) return;
         
-        // Assume hourly rate of 2000 for demo
         const ratePerHour = 2000;
         const totalMinutes = unbilledLogs.reduce((sum, l) => sum + l.duration, 0);
         const totalAmount = Math.round((totalMinutes / 60) * ratePerHour);
@@ -54,18 +57,17 @@ const Billing: React.FC<BillingProps> = ({ client, firmProfile }) => {
         
         setCurrentInvoiceItems([...currentInvoiceItems, timeItem]);
         setImportedLogIds(unbilledLogs.map(l => l.id));
-        // Clear local state so they can't import twice in same session
         setUnbilledLogs([]);
     };
 
-    const createInvoice = () => {
+    const createInvoice = async () => {
         const total = currentInvoiceItems.reduce((sum, item) => sum + item.amount, 0);
         const newInvoice: Invoice = {
             id: Date.now().toString(),
             clientId: client.id,
             number: `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`,
             date: new Date().toLocaleDateString(),
-            dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString(), // +15 days
+            dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString(),
             items: currentInvoiceItems,
             total: total,
             status: 'Draft'
@@ -73,15 +75,13 @@ const Billing: React.FC<BillingProps> = ({ client, firmProfile }) => {
 
         const updated = [newInvoice, ...invoices];
         setInvoices(updated);
-        storageService.saveInvoices(client.id, updated);
+        await storageService.createInvoice(newInvoice);
         
-        // Mark time logs as billed
         if (importedLogIds.length > 0) {
-            storageService.markTimeLogsAsBilled(importedLogIds);
+            await storageService.markTimeLogsAsBilled(importedLogIds);
         }
         
-        // Log activity
-        storageService.logActivity({
+        await storageService.logActivity({
             id: Date.now().toString(),
             clientId: client.id,
             clientName: client.name,
@@ -95,10 +95,14 @@ const Billing: React.FC<BillingProps> = ({ client, firmProfile }) => {
         setImportedLogIds([]);
     };
 
-    const markAsSent = (id: string) => {
-        const updated = invoices.map(inv => inv.id === id ? { ...inv, status: 'Sent' as const } : inv);
-        setInvoices(updated);
-        storageService.saveInvoices(client.id, updated);
+    const markAsSent = async (id: string) => {
+        const inv = invoices.find(i => i.id === id);
+        if(!inv) return;
+        
+        const updatedInv = { ...inv, status: 'Sent' as const };
+        const updatedList = invoices.map(i => i.id === id ? updatedInv : i);
+        setInvoices(updatedList);
+        await storageService.updateInvoice(updatedInv);
     };
     
     const handleDownload = (inv: Invoice) => {

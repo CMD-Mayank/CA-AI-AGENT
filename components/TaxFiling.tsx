@@ -123,7 +123,7 @@ const TaxFiling: React.FC<TaxFilingProps> = ({ client, firmProfile }) => {
     }
   }, [isLoading, formData, client]);
 
-  const handleSaveRecord = () => {
+  const handleSaveRecord = async () => {
       if (!response) return;
       
       setSaveStatus('saving');
@@ -137,6 +137,7 @@ const TaxFiling: React.FC<TaxFilingProps> = ({ client, firmProfile }) => {
       }
       
       const content = `${header}TAX COMPUTATION REPORT\n\nClient: ${client.name}\nPAN: ${client.pan}\nDate: ${new Date().toLocaleDateString()}\n\n${response}`;
+      const userEmail = await storageService.getUserEmail();
       
       const newDoc: ClientDocument = {
           id: Date.now().toString(),
@@ -145,7 +146,7 @@ const TaxFiling: React.FC<TaxFilingProps> = ({ client, firmProfile }) => {
           type: 'Tax Report',
           content: content,
           createdAt: Date.now(),
-          createdBy: storageService.getUserEmail() || 'Admin',
+          createdBy: userEmail || 'Admin',
           status: 'Draft' // Default to Draft for workflow
       };
       

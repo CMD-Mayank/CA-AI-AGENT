@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Button } from './common/Button';
 import { Input } from './common/Input';
@@ -12,18 +13,50 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [firmName, setFirmName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API call delay
-    setTimeout(() => {
-      storageService.login(email);
-      setIsLoading(false);
-      onLogin();
-    }, 1000);
+    setError(null);
+
+    try {
+        const { error } = await storageService.signIn(email);
+        
+        if (error) throw new Error(error);
+        
+        setIsLoading(false);
+        onLogin();
+    } catch (err: any) {
+        setError(err.message || 'Login failed');
+        setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+        if (!email || !password || !firmName) {
+            throw new Error("All fields are required");
+        }
+
+        const { error } = await storageService.signUp(email, fullName, firmName);
+
+        if (error) throw new Error(error);
+
+        setIsLoading(false);
+        onLogin();
+
+    } catch (err: any) {
+        setError(err.message || "Signup failed");
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -31,95 +64,76 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-3xl shadow-lg transform -rotate-6">
-            CA
+            AE
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-            {isLogin ? 'Welcome back' : 'Create your account'}
+            {isLogin ? 'Welcome back' : 'Setup your Firm'}
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">
-            Your AI-powered financial co-pilot awaits.
+            {isLogin ? 'Sign in to access your dashboard' : 'Create your secure practice environment'}
           </p>
         </div>
         
         <div className="bg-white dark:bg-slate-800 py-8 px-4 shadow-xl rounded-2xl sm:px-10 border border-gray-100 dark:border-slate-700">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm rounded-lg border border-red-100 dark:border-red-800">
+              {error}
+            </div>
+          )}
+          
+          <form className="space-y-6" onSubmit={isLogin ? handleLogin : handleSignUp}>
+            {!isLogin && (
+              <>
+                 <Input 
+                  label="Full Name" 
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. CA Rajesh Kumar"
+                  required
+                />
+                 <Input 
+                  label="Firm Name" 
+                  value={firmName}
+                  onChange={(e) => setFirmName(e.target.value)}
+                  placeholder="e.g. Kumar & Associates"
+                  required
+                />
+              </>
+            )}
+
             <Input 
-              id="email"
-              name="email"
               label="Email Address" 
               type="email" 
               required 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              autoComplete="email"
             />
             
             <Input 
-              id="password"
-              name="password"
               label="Password" 
               type="password" 
               required 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              autoComplete={isLogin ? "current-password" : "new-password"}
+              minLength={6}
             />
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-slate-300">
-                  Remember me
-                </label>
-              </div>
-
-              {isLogin && (
-                <div className="text-sm">
-                  <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-                    Forgot password?
-                  </a>
-                </div>
-              )}
-            </div>
-
             <Button type="submit" isLoading={isLoading}>
-              {isLogin ? 'Sign In' : 'Create Account'}
+              {isLogin ? 'Sign In' : 'Create Firm Account'}
             </Button>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-slate-600" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400">
-                  {isLogin ? 'New to CA AI Agent?' : 'Already have an account?'}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
-              >
-                {isLogin ? 'Start your 14-day free trial' : 'Sign in to your account'}
-              </button>
-            </div>
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => { setIsLogin(!isLogin); setError(null); }}
+              className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
+            >
+              {isLogin ? 'Register new Firm' : 'Already have an account? Sign in'}
+            </button>
           </div>
         </div>
-        
-        <p className="text-center text-xs text-gray-500 dark:text-slate-500">
-          By signing in, you agree to our <a href="#" className="underline hover:text-gray-900 dark:hover:text-white">Terms of Service</a> and <a href="#" className="underline hover:text-gray-900 dark:hover:text-white">Privacy Policy</a>.
-        </p>
       </div>
     </div>
   );

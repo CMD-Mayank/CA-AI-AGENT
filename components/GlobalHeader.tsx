@@ -56,73 +56,79 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ clients, onClientSel
     
     // Load Notifications (Urgent Tasks)
     useEffect(() => {
-        const allTasks = storageService.getTasks();
-        // Filter tasks due in next 3 days
-        const now = new Date();
-        const threeDaysFromNow = new Date();
-        threeDaysFromNow.setDate(now.getDate() + 3);
-        
-        const urgent = allTasks.filter(t => {
-            if(t.status === 'Done') return false;
-            const d = new Date(t.dueDate);
-            return d <= threeDaysFromNow;
-        });
-        setNotifications(urgent);
+        const fetchTasks = async () => {
+             const allTasks = await storageService.getTasks();
+             // Filter tasks due in next 3 days
+             const now = new Date();
+             const threeDaysFromNow = new Date();
+             threeDaysFromNow.setDate(now.getDate() + 3);
+             
+             const urgent = allTasks.filter(t => {
+                 if(t.status === 'Done') return false;
+                 const d = new Date(t.dueDate);
+                 return d <= threeDaysFromNow;
+             });
+             setNotifications(urgent);
+        };
+        fetchTasks();
     }, [activeView]); // Refresh on view change
 
     // Search Logic
     useEffect(() => {
-        if (!searchQuery.trim()) {
-            setResults([]);
-            return;
-        }
-
-        const query = searchQuery.toLowerCase();
-        const newResults: {type: string, label: string, action: () => void}[] = [];
-
-        // Search Clients
-        clients.forEach(client => {
-            if (client.name.toLowerCase().includes(query) || client.pan.toLowerCase().includes(query)) {
-                newResults.push({
-                    type: 'Client',
-                    label: client.name,
-                    action: () => onClientSelect(client)
-                });
-            }
-        });
-
-        // Search Views (Navigation)
-        Object.values(View).forEach(view => {
-            if (view.toLowerCase().includes(query)) {
-                newResults.push({
-                    type: 'Navigate',
-                    label: `Go to ${view}`,
-                    action: () => onViewSelect(view)
-                });
-            }
-        });
-        
-        // Search Documents (Simple title match)
-        const docs = storageService.getAllDocuments();
-        docs.forEach(doc => {
-             if (doc.title.toLowerCase().includes(query)) {
-                newResults.push({
-                    type: 'Document',
-                    label: doc.title,
-                    action: () => {
-                        // Find client context first
-                        const client = clients.find(c => c.id === doc.clientId);
-                        if(client) {
-                            onClientSelect(client);
-                            onViewSelect(View.Documents);
+        const performSearch = async () => {
+             if (!searchQuery.trim()) {
+                 setResults([]);
+                 return;
+             }
+    
+            const query = searchQuery.toLowerCase();
+            const newResults: {type: string, label: string, action: () => void}[] = [];
+    
+            // Search Clients
+            clients.forEach(client => {
+                if (client.name.toLowerCase().includes(query) || client.pan.toLowerCase().includes(query)) {
+                    newResults.push({
+                        type: 'Client',
+                        label: client.name,
+                        action: () => onClientSelect(client)
+                    });
+                }
+            });
+    
+            // Search Views (Navigation)
+            Object.values(View).forEach(view => {
+                if (view.toLowerCase().includes(query)) {
+                    newResults.push({
+                        type: 'Navigate',
+                        label: `Go to ${view}`,
+                        action: () => onViewSelect(view)
+                    });
+                }
+            });
+            
+            // Search Documents (Simple title match)
+            const docs = await storageService.getAllDocuments();
+            docs.forEach(doc => {
+                 if (doc.title.toLowerCase().includes(query)) {
+                    newResults.push({
+                        type: 'Document',
+                        label: doc.title,
+                        action: () => {
+                            // Find client context first
+                            const client = clients.find(c => c.id === doc.clientId);
+                            if(client) {
+                                onClientSelect(client);
+                                onViewSelect(View.Documents);
+                            }
                         }
-                    }
-                });
-            }
-        });
-
-        setResults(newResults.slice(0, 6)); // Limit to 6 results
-        setShowResults(true);
+                    });
+                }
+            });
+    
+            setResults(newResults.slice(0, 6)); // Limit to 6 results
+            setShowResults(true);
+        }
+        performSearch();
     }, [searchQuery, clients, onClientSelect, onViewSelect]);
 
     const handleResultClick = (action: () => void) => {
@@ -143,7 +149,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ clients, onClientSel
                     <MenuIcon className="w-6 h-6" />
                 </button>
                 <span className="font-bold text-gray-800 dark:text-white text-lg truncate max-w-[150px]">
-                    CA Agent
+                    AuditEra
                 </span>
             </div>
 

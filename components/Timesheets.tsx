@@ -25,16 +25,21 @@ export const Timesheets: React.FC<TimesheetsProps> = ({ clients }) => {
     });
 
     useEffect(() => {
-        setLogs(storageService.getTimeLogs());
-        setTasks(storageService.getTasks());
+        const loadData = async () => {
+             setLogs(await storageService.getTimeLogs());
+             setTasks(await storageService.getTasks());
+        }
+        loadData();
     }, []);
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.clientId || !formData.duration) return;
 
         const client = clients.find(c => c.id === formData.clientId);
         const task = tasks.find(t => t.id === formData.taskId);
+
+        const userEmail = await storageService.getUserEmail();
 
         const newLog: TimeLog = {
             id: Date.now().toString(),
@@ -42,7 +47,7 @@ export const Timesheets: React.FC<TimesheetsProps> = ({ clients }) => {
             clientName: client?.name || 'Unknown',
             taskId: formData.taskId,
             taskTitle: task?.title,
-            user: storageService.getUserEmail() || 'Admin',
+            user: userEmail || 'Admin',
             date: formData.date,
             duration: parseInt(formData.duration),
             description: formData.description,

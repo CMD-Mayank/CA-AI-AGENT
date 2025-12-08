@@ -2,74 +2,89 @@
 import React, { useState, useEffect } from 'react';
 import { ModuleContainer } from './common/ModuleContainer';
 import { Task, Client } from '../types';
-import { storageService } from '../services/storage';
 import { Button } from './common/Button';
+import { storageService } from '../services/storage';
 
 interface TasksProps {
     clients: Client[];
+    firmId: string | null;
 }
 
-export const Tasks: React.FC<TasksProps> = ({ clients }) => {
+export const Tasks: React.FC<TasksProps> = ({ clients, firmId }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [showModal, setShowModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     
-    // New Task Form State
     const [newTask, setNewTask] = useState<Partial<Task>>({
         priority: 'Medium',
         status: 'To Do'
     });
 
     useEffect(() => {
-        const loadedTasks = storageService.getTasks();
-        setTasks(loadedTasks);
-    }, []);
+        fetchTasks();
+    }, [firmId]);
 
-    const handleSaveTask = () => {
+    const fetchTasks = async () => {
+        const localTasks = await storageService.getTasks();
+        setTasks(localTasks);
+    };
+
+    const handleSaveTask = async () => {
         if (!newTask.title || !newTask.clientId || !newTask.dueDate) return;
+        setIsLoading(true);
         
-        const client = clients.find(c => c.id === newTask.clientId);
-        
-        const taskToAdd: Task = {
-            id: Date.now().toString(),
-            title: newTask.title,
-            clientId: newTask.clientId,
-            clientName: client?.name || 'Unknown',
-            assignee: newTask.assignee || 'Unassigned',
-            dueDate: newTask.dueDate,
-            status: newTask.status as any,
-            priority: newTask.priority as any
-        };
+        try {
+            const client = clients.find(c => c.id === newTask.clientId);
 
-        const updatedTasks = [...tasks, taskToAdd];
-        setTasks(updatedTasks);
-        storageService.saveTasks(updatedTasks);
-        
-        // Reset and close
-        setNewTask({ priority: 'Medium', status: 'To Do' });
-        setShowModal(false);
-        
-        // Log
-        storageService.logActivity({
-            id: Date.now().toString(),
-            clientId: taskToAdd.clientId,
-            clientName: taskToAdd.clientName,
-            action: 'Task Created',
-            timestamp: Date.now(),
-            details: taskToAdd.title
-        });
+            const task: Task = {
+                id: Date.now().toString(), // Will be ignored/mapped by DB if auto-gen
+                title: newTask.title,
+                clientId: newTask.clientId,
+                clientName: client ? client.name : 'Unknown',
+                assignee: newTask.assignee || 'Unassigned',
+                dueDate: newTask.dueDate,
+                status: newTask.status || 'To Do',
+                priority: newTask.priority || 'Medium'
+            };
+
+            await storageService.addTask(task);
+            await fetchTasks(); 
+            
+            setNewTask({ priority: 'Medium', status: 'To Do' });
+            setShowModal(false);
+        } catch (error: any) {
+            alert('Error creating task: ' + error.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const updateTaskStatus = (taskId: string, newStatus: Task['status']) => {
-        const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t);
-        setTasks(updatedTasks);
-        storageService.saveTasks(updatedTasks);
+    const updateTaskStatus = async (taskId: string, newStatus: Task['status']) => {
+        const task = tasks.find(t => t.id === taskId);
+        if(!task) return;
+
+        const updatedTask = { ...task, status: newStatus };
+        
+        // Optimistic update
+        const oldTasks = [...tasks];
+        setTasks(tasks.map(t => t.id === taskId ? updatedTask : t));
+
+        try {
+            await storageService.updateTask(updatedTask);
+        } catch (error) {
+            setTasks(oldTasks); 
+            alert('Failed to update status');
+        }
     };
 
-    const deleteTask = (taskId: string) => {
-        if (confirm('Delete this task?')) {
-            const updatedTasks = tasks.filter(t => t.id !== taskId);
-            setTasks(updatedTasks);
-            storageService.saveTasks(updatedTasks);
+    const deleteTask = async (taskId: string) => {
+        if (!confirm('Delete this task?')) return;
+        
+        try {
+            await storageService.deleteTask(taskId);
+            setTasks(tasks.filter(t => t.id !== taskId));
+        } catch (error: any) {
+            alert('Error: ' + error.message);
         }
     };
     
@@ -90,7 +105,7 @@ export const Tasks: React.FC<TasksProps> = ({ clients }) => {
     ];
 
     return (
-        <ModuleContainer title="Workflow Manager" description="Track deliverables, deadlines, and team assignments.">
+        <ModuleContainer title="Workflow Manager" description="Real-time collaborative task board.">
             <div className="mb-6 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-500 dark:text-slate-400">Active Tasks:</span>
@@ -133,27 +148,21 @@ export const Tasks: React.FC<TasksProps> = ({ clients }) => {
                                     <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-slate-700 mt-2">
                                         <div className="flex items-center gap-1">
                                             <div className="w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 flex items-center justify-center text-[10px] font-bold">
-                                                {task.assignee.charAt(0)}
+                                                {(task.assignee || 'U').charAt(0)}
                                             </div>
                                             <span className="text-[10px] text-gray-500">{task.dueDate}</span>
                                         </div>
-                                        {/* Simple Move Logic for demo */}
                                         <div className="flex gap-1">
                                              {col.status !== 'To Do' && (
-                                                 <button onClick={() => updateTaskStatus(task.id, columns[columns.findIndex(c => c.status === col.status) - 1].status)} className="text-gray-400 hover:text-teal-600 text-xs" title="Move Left">←</button>
+                                                 <button onClick={() => updateTaskStatus(task.id, columns[columns.findIndex(c => c.status === col.status) - 1].status)} className="text-gray-400 hover:text-teal-600 text-xs">←</button>
                                              )}
                                              {col.status !== 'Done' && (
-                                                 <button onClick={() => updateTaskStatus(task.id, columns[columns.findIndex(c => c.status === col.status) + 1].status)} className="text-gray-400 hover:text-teal-600 text-xs" title="Move Right">→</button>
+                                                 <button onClick={() => updateTaskStatus(task.id, columns[columns.findIndex(c => c.status === col.status) + 1].status)} className="text-gray-400 hover:text-teal-600 text-xs">→</button>
                                              )}
                                         </div>
                                     </div>
                                 </div>
                             ))}
-                            {tasks.filter(t => t.status === col.status).length === 0 && (
-                                <div className="text-center py-8 text-xs text-gray-400 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-lg">
-                                    No tasks
-                                </div>
-                            )}
                         </div>
                     </div>
                 ))}
@@ -163,70 +172,32 @@ export const Tasks: React.FC<TasksProps> = ({ clients }) => {
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-slate-700">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Add New Task</h2>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Add Task</h2>
                         <div className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">Task Title</label>
-                                <input 
-                                    className="w-full p-2 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800"
-                                    value={newTask.title || ''}
-                                    onChange={e => setNewTask({...newTask, title: e.target.value})}
-                                    placeholder="e.g. File Quarterly TDS"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">Client</label>
-                                <select 
-                                    className="w-full p-2 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800"
-                                    value={newTask.clientId || ''}
-                                    onChange={e => setNewTask({...newTask, clientId: e.target.value})}
-                                >
-                                    <option value="">Select Client</option>
-                                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">Assignee</label>
-                                    <input 
-                                        className="w-full p-2 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800"
-                                        value={newTask.assignee || ''}
-                                        onChange={e => setNewTask({...newTask, assignee: e.target.value})}
-                                        placeholder="Name"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">Due Date</label>
-                                    <input 
-                                        type="date"
-                                        className="w-full p-2 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800"
-                                        value={newTask.dueDate || ''}
-                                        onChange={e => setNewTask({...newTask, dueDate: e.target.value})}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">Priority</label>
-                                <div className="flex gap-2">
-                                    {['Low', 'Medium', 'High'].map(p => (
-                                        <button 
-                                            key={p}
-                                            onClick={() => setNewTask({...newTask, priority: p as any})}
-                                            className={`flex-1 py-1.5 text-xs font-medium rounded border ${
-                                                newTask.priority === p 
-                                                ? 'bg-teal-100 border-teal-500 text-teal-800 dark:bg-teal-900 dark:text-teal-200' 
-                                                : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400'
-                                            }`}
-                                        >
-                                            {p}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            <input 
+                                className="w-full p-2 text-sm border rounded bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                                value={newTask.title || ''}
+                                onChange={e => setNewTask({...newTask, title: e.target.value})}
+                                placeholder="Task Title"
+                            />
+                            <select 
+                                className="w-full p-2 text-sm border rounded bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                                value={newTask.clientId || ''}
+                                onChange={e => setNewTask({...newTask, clientId: e.target.value})}
+                            >
+                                <option value="">Select Client</option>
+                                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                            <input 
+                                type="date"
+                                className="w-full p-2 text-sm border rounded bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                                value={newTask.dueDate || ''}
+                                onChange={e => setNewTask({...newTask, dueDate: e.target.value})}
+                            />
                         </div>
                         <div className="flex gap-3 mt-6">
-                            <button onClick={() => setShowModal(false)} className="flex-1 py-2 text-sm border rounded hover:bg-gray-50 dark:hover:bg-slate-700">Cancel</button>
-                            <Button onClick={handleSaveTask} style={{flex: 1}}>Save Task</Button>
+                            <button onClick={() => setShowModal(false)} className="flex-1 py-2 text-sm border rounded text-gray-700 dark:text-slate-300">Cancel</button>
+                            <Button onClick={handleSaveTask} style={{flex: 1}} isLoading={isLoading}>Save</Button>
                         </div>
                     </div>
                 </div>
