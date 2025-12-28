@@ -1,131 +1,104 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 :root {
-  --background-light: #f9fafb; /* gray-50 */
-  --background-dark: #0f172a;  /* slate-900 */
-  --sidebar-light: #ffffff;
-  --sidebar-dark: #1e293b; /* slate-800 */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
   
-  /* Default Theme: Teal */
-  --color-primary-50: 240 253 250;
-  --color-primary-100: 204 251 241;
-  --color-primary-200: 153 246 228;
-  --color-primary-300: 94 234 212;
-  --color-primary-400: 45 212 191;
-  --color-primary-500: 20 184 166;
-  --color-primary-600: 13 148 136;
-  --color-primary-700: 15 118 110;
-  --color-primary-800: 17 94 89;
-  --color-primary-900: 19 78 74;
+  /* High-End Enterprise Palette */
+  --bg-page: #fafafa;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f4f4f5;
+  --border-subtle: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text-primary: #09090b;
+  --text-secondary: #52525b;
+  --text-tertiary: #a1a1aa;
+  --accent-teal: #0d9488;
+  --accent-blue: #2563eb;
+  
+  --radius-xl: 1rem;
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
 }
 
-/* Blue Theme */
-[data-theme='blue'] {
-    --color-primary-50: 239 246 255;
-    --color-primary-100: 219 234 254;
-    --color-primary-200: 191 219 254;
-    --color-primary-300: 147 197 253;
-    --color-primary-400: 96 165 250;
-    --color-primary-500: 59 130 246;
-    --color-primary-600: 37 99 235;
-    --color-primary-700: 29 78 216;
-    --color-primary-800: 30 64 175;
-    --color-primary-900: 30 58 138;
+[class~="dark"] {
+  --bg-page: #040405;
+  --bg-surface: #09090b;
+  --bg-surface-hover: #18181b;
+  --border-subtle: #18181b;
+  --border-strong: #27272a;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #52525b;
 }
 
-/* Indigo Theme */
-[data-theme='indigo'] {
-    --color-primary-50: 238 242 255;
-    --color-primary-100: 224 231 255;
-    --color-primary-200: 199 210 254;
-    --color-primary-300: 165 180 252;
-    --color-primary-400: 129 140 248;
-    --color-primary-500: 99 102 241;
-    --color-primary-600: 79 70 229;
-    --color-primary-700: 67 56 202;
-    --color-primary-800: 55 48 163;
-    --color-primary-900: 49 46 129;
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.015em;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Violet Theme */
-[data-theme='violet'] {
-    --color-primary-50: 245 243 255;
-    --color-primary-100: 237 233 254;
-    --color-primary-200: 221 214 254;
-    --color-primary-300: 196 181 253;
-    --color-primary-400: 167 139 250;
-    --color-primary-500: 139 92 246;
-    --color-primary-600: 124 58 237;
-    --color-primary-700: 109 40 217;
-    --color-primary-800: 91 33 182;
-    --color-primary-900: 76 29 149;
+/* Luxury Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background-color: var(--border-strong); 
+  border-radius: 10px; 
 }
 
-/* Rose Theme */
-[data-theme='rose'] {
-    --color-primary-50: 255 241 242;
-    --color-primary-100: 255 228 230;
-    --color-primary-200: 254 205 211;
-    --color-primary-300: 253 164 175;
-    --color-primary-400: 251 113 133;
-    --color-primary-500: 244 63 94;
-    --color-primary-600: 225 29 72;
-    --color-primary-700: 190 18 60;
-    --color-primary-800: 159 18 57;
-    --color-primary-900: 136 19 55;
+/* The "Billion Dollar" Glass Effect */
+.glass-vault {
+  background: rgba(var(--bg-surface), 0.7);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--border-subtle);
 }
 
-/* Orange Theme */
-[data-theme='orange'] {
-    --color-primary-50: 255 247 237;
-    --color-primary-100: 255 237 213;
-    --color-primary-200: 254 215 170;
-    --color-primary-300: 253 186 116;
-    --color-primary-400: 251 146 60;
-    --color-primary-500: 249 115 22;
-    --color-primary-600: 234 88 12;
-    --color-primary-700: 194 65 12;
-    --color-primary-800: 154 52 18;
-    --color-primary-900: 124 45 18;
+.card-premium {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
 }
 
-/* Custom scrollbar for a cleaner look */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.card-premium:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.05);
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* Pro Telemetry Text */
+.telemetry {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
+/* Focus States */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
 }
 
-.dark ::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+@keyframes beam {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
 }
 
-/* Animation Utilities */
-@keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.animate-beam {
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes fade-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+.animate-beam::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(13, 148, 136, 0.05), transparent);
+  animation: beam 3s infinite;
 }
-
-.animate-fade-in {
-    animation: fade-in 0.5s ease-out forwards;
-}
-
-.animate-fade-up {
-    animation: fade-up 0.6s ease-out forwards;
-}
-
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }

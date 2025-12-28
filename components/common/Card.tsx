@@ -1,16 +1,28 @@
+
 import React from 'react';
 
 interface CardProps {
-  title?: string;
+  title?: React.ReactNode; // Allow custom headers
   children: React.ReactNode;
   className?: string;
+  noPadding?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ title, children, className = '' }) => {
+export const Card: React.FC<CardProps> = ({ title, children, className = '', noPadding = false }) => {
   return (
-    <div className={`bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-6 ${className}`}>
-      {title && <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-4">{title}</h3>}
-      {children}
+    <div className={`card-premium overflow-hidden ${className}`}>
+      {title && (
+        <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
+          {typeof title === 'string' ? (
+             <h3 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h3>
+          ) : (
+             title
+          )}
+        </div>
+      )}
+      <div className={noPadding ? '' : 'p-5'}>
+        {children}
+      </div>
     </div>
   );
 };

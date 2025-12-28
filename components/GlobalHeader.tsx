@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Client, Task } from '../types';
+import { View, Client, Task, FirmProfile } from '../types';
 import { storageService } from '../services/storage';
 import { SearchIcon } from './icons/SearchIcon';
 import { BellIcon } from './icons/BellIcon';
-import { UserIcon } from './icons/UserIcon';
 import { MoonIcon } from './icons/MoonIcon';
 import { SunIcon } from './icons/SunIcon';
 import { LockIcon } from './icons/LockIcon';
 import { MenuIcon } from './icons/MenuIcon';
+import { GlobeIcon } from './icons/GlobeIcon';
 
 interface GlobalHeaderProps {
     clients: Client[];
@@ -28,249 +28,101 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ clients, onClientSel
     const [results, setResults] = useState<{type: string, label: string, action: () => void}[]>([]);
     const searchRef = useRef<HTMLDivElement>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [firmProfile, setFirmProfile] = useState<FirmProfile | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
     
-    // Notifications
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [notifications, setNotifications] = useState<Task[]>([]);
-    const notifRef = useRef<HTMLDivElement>(null);
-
-    // Update time for professional feel
     useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        setFirmProfile(storageService.getFirmProfile());
         return () => clearInterval(timer);
-    }, []);
+    }, [activeView]);
 
-    // Close search/notifs on click outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-                setShowResults(false);
-            }
-            if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-                setShowNotifications(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-    
-    // Load Notifications (Urgent Tasks)
-    useEffect(() => {
-        const fetchTasks = async () => {
-             const allTasks = await storageService.getTasks();
-             // Filter tasks due in next 3 days
-             const now = new Date();
-             const threeDaysFromNow = new Date();
-             threeDaysFromNow.setDate(now.getDate() + 3);
-             
-             const urgent = allTasks.filter(t => {
-                 if(t.status === 'Done') return false;
-                 const d = new Date(t.dueDate);
-                 return d <= threeDaysFromNow;
-             });
-             setNotifications(urgent);
-        };
-        fetchTasks();
-    }, [activeView]); // Refresh on view change
-
-    // Search Logic
     useEffect(() => {
         const performSearch = async () => {
              if (!searchQuery.trim()) {
                  setResults([]);
                  return;
              }
-    
             const query = searchQuery.toLowerCase();
             const newResults: {type: string, label: string, action: () => void}[] = [];
-    
-            // Search Clients
+            
             clients.forEach(client => {
                 if (client.name.toLowerCase().includes(query) || client.pan.toLowerCase().includes(query)) {
-                    newResults.push({
-                        type: 'Client',
-                        label: client.name,
-                        action: () => onClientSelect(client)
-                    });
+                    newResults.push({ type: 'Entity', label: client.name, action: () => onClientSelect(client) });
                 }
             });
-    
-            // Search Views (Navigation)
             Object.values(View).forEach(view => {
                 if (view.toLowerCase().includes(query)) {
-                    newResults.push({
-                        type: 'Navigate',
-                        label: `Go to ${view}`,
-                        action: () => onViewSelect(view)
-                    });
+                    newResults.push({ type: 'Route', label: `Jump to ${view}`, action: () => onViewSelect(view) });
                 }
             });
-            
-            // Search Documents (Simple title match)
-            const docs = await storageService.getAllDocuments();
-            docs.forEach(doc => {
-                 if (doc.title.toLowerCase().includes(query)) {
-                    newResults.push({
-                        type: 'Document',
-                        label: doc.title,
-                        action: () => {
-                            // Find client context first
-                            const client = clients.find(c => c.id === doc.clientId);
-                            if(client) {
-                                onClientSelect(client);
-                                onViewSelect(View.Documents);
-                            }
-                        }
-                    });
-                }
-            });
-    
-            setResults(newResults.slice(0, 6)); // Limit to 6 results
+            setResults(newResults.slice(0, 6));
             setShowResults(true);
         }
         performSearch();
-    }, [searchQuery, clients, onClientSelect, onViewSelect]);
-
-    const handleResultClick = (action: () => void) => {
-        action();
-        setSearchQuery('');
-        setShowResults(false);
-    };
+    }, [searchQuery, clients]);
 
     return (
-        <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 h-16 px-4 lg:px-6 flex items-center justify-between shrink-0 z-20 relative transition-colors duration-200">
-            
-            {/* Mobile Menu & Brand */}
-            <div className="flex items-center gap-3 lg:hidden">
-                <button 
-                    onClick={onMenuToggle}
-                    className="p-2 -ml-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg"
-                >
-                    <MenuIcon className="w-6 h-6" />
+        <header className="h-16 px-6 lg:px-12 flex items-center justify-between shrink-0 z-30 sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-[var(--border-subtle)]">
+            <div className="flex items-center gap-6">
+                <button onClick={onMenuToggle} className="lg:hidden p-2 text-zinc-500">
+                    <MenuIcon className="w-5 h-5" />
                 </button>
-                <span className="font-bold text-gray-800 dark:text-white text-lg truncate max-w-[150px]">
-                    AuditEra
-                </span>
+                <div className="hidden lg:flex items-center gap-3">
+                    <span className="telemetry text-zinc-400">Node_ID:</span>
+                    <span className="text-xs font-bold tracking-tighter text-zinc-900 dark:text-zinc-100">AUDITERA_PRO_HKG</span>
+                </div>
             </div>
 
-            {/* Search Bar (Command Center) */}
-            <div className="flex-1 max-w-xl relative mx-4" ref={searchRef}>
-                <div className="relative hidden md:block">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                        <SearchIcon />
+            <div className="flex-1 max-w-xl relative mx-8" ref={searchRef}>
+                <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
+                        <SearchIcon className="w-4 h-4" />
                     </div>
                     <input 
                         type="text" 
-                        placeholder="Search clients, reports, or commands (Ctrl+K)" 
-                        className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500"
+                        placeholder="Search entities, files, or workflows... (⌘K)" 
+                        className="w-full bg-zinc-100 dark:bg-zinc-900/50 border border-transparent focus:border-teal-500/30 rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-4 focus:ring-teal-500/5 transition-all outline-none"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => searchQuery && setShowResults(true)}
                     />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span className="text-xs text-gray-400 border border-gray-200 dark:border-slate-700 rounded px-1.5 py-0.5">⌘K</span>
-                    </div>
                 </div>
-                
-                {/* Mobile Search Icon (Placeholder functionality) */}
-                <button className="md:hidden p-2 text-gray-500 dark:text-slate-400">
-                    <SearchIcon />
-                </button>
 
-                {/* Search Results Dropdown */}
                 {showResults && results.length > 0 && (
-                    <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden py-2 animate-fade-in z-30">
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden py-2 z-50">
                         {results.map((res, idx) => (
                             <button 
                                 key={idx}
-                                onClick={() => handleResultClick(res.action)}
-                                className="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-3 group transition-colors"
+                                onClick={() => { res.action(); setShowResults(false); setSearchQuery(''); }}
+                                className="w-full text-left px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-4 group"
                             >
-                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase w-16 text-center shrink-0 ${
-                                    res.type === 'Client' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
-                                    res.type === 'Navigate' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' :
-                                    'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
-                                }`}>
-                                    {res.type}
-                                </span>
-                                <span className="text-sm text-gray-700 dark:text-slate-200 font-medium group-hover:text-primary-600 dark:group-hover:text-primary-400 truncate">
-                                    {res.label}
-                                </span>
+                                <span className="telemetry text-[9px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500">{res.type}</span>
+                                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{res.label}</span>
                             </button>
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-3 lg:gap-6">
-                {/* Date Display (Pro Feature) */}
-                <div className="hidden lg:block text-right">
-                    <p className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                        {currentTime.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                    </p>
-                    <p className="text-sm font-mono font-medium text-gray-700 dark:text-slate-300">
-                        {currentTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+            <div className="flex items-center gap-2 lg:gap-5">
+                <div className="hidden md:flex flex-col items-end mr-2">
+                    <p className="text-[10px] telemetry text-zinc-500">{currentTime.toLocaleTimeString([], { hour12: false })}</p>
+                    <p className="text-[9px] telemetry text-teal-600 font-bold">Encrypted Connection</p>
                 </div>
 
-                <div className="h-8 w-px bg-gray-200 dark:bg-slate-700 hidden lg:block"></div>
+                <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block"></div>
 
-                {/* Theme Toggle */}
-                <button 
-                    onClick={toggleTheme}
-                    className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                >
-                    {darkMode ? <SunIcon /> : <MoonIcon />}
-                </button>
-                
-                {/* Lock Screen */}
-                <button 
-                    onClick={onLock}
-                    className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    title="Lock Session"
-                >
-                    <LockIcon />
-                </button>
-
-                {/* Notifications */}
-                <div className="relative" ref={notifRef}>
-                    <button 
-                        onClick={() => setShowNotifications(!showNotifications)}
-                        className="relative p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    >
-                        <BellIcon />
-                        {notifications.length > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
-                        )}
+                <div className="flex items-center gap-1">
+                    <button onClick={toggleTheme} className="p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-colors">
+                        {darkMode ? <SunIcon className="w-4 h-4 text-zinc-400" /> : <MoonIcon className="w-4 h-4 text-zinc-500" />}
                     </button>
-                    {showNotifications && (
-                        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden z-30">
-                            <div className="p-3 border-b border-gray-100 dark:border-slate-700 font-semibold text-sm bg-gray-50 dark:bg-slate-700/50">
-                                Notifications ({notifications.length})
-                            </div>
-                            <div className="max-h-64 overflow-y-auto">
-                                {notifications.length === 0 ? (
-                                    <div className="p-6 text-center text-xs text-gray-500">No urgent alerts.</div>
-                                ) : (
-                                    notifications.map(n => (
-                                        <div key={n.id} className="p-3 border-b border-gray-50 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
-                                            <p className="text-xs font-bold text-gray-800 dark:text-white">{n.title}</p>
-                                            <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">Due: {n.dueDate} • {n.clientName}</p>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    <button onClick={onLock} className="p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-colors">
+                        <LockIcon className="w-4 h-4 text-zinc-400" />
+                    </button>
                 </div>
 
-                {/* Profile */}
-                <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                    <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-sm">
-                        <UserIcon className="w-5 h-5" />
-                    </div>
+                <div className="h-10 w-10 rounded-2xl bg-zinc-950 dark:bg-white flex items-center justify-center text-white dark:text-black font-black text-xs shadow-xl border border-white/10">
+                    {firmProfile?.name?.[0].toUpperCase() || 'A'}
                 </div>
             </div>
         </header>

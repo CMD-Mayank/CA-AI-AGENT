@@ -12,9 +12,8 @@ import { NewsIcon } from './icons/NewsIcon';
 import { ShieldCheckIcon } from './icons/ShieldCheckIcon';
 import { HomeIcon } from './icons/HomeIcon';
 import { ClockIcon } from './icons/ClockIcon';
-import { UserIcon } from './icons/UserIcon';
+import { QuestionMarkIcon } from './icons/QuestionMarkIcon';
 import { BuildingIcon } from './icons/BuildingIcon';
-import { ChartIcon } from './icons/ChartIcon';
 import { View, Client, FirmProfile } from '../types';
 
 interface SidebarProps {
@@ -33,15 +32,16 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, selectedClient, onClientChange, onAddClient, onEditClient, firmProfile, isOpen, onClose }) => {
   const navItems = [
     { name: 'Overview', icon: <HomeIcon />, view: View.ClientOverview },
-    { name: 'Terminal', icon: <DashboardIcon />, view: View.Dashboard },
-    { name: 'Workflows', icon: <ClipboardCheckIcon />, view: View.Workflows },
-    { name: 'KYC Vault', icon: <ShieldCheckIcon />, view: View.KYC },
-    { name: 'Taxation AI', icon: <DocumentIcon />, view: View.TaxFiling },
-    { name: 'Compliance', icon: <BriefcaseIcon />, view: View.Compliance },
-    { name: 'Govt Portals', icon: <BuildingIcon />, view: View.Portal }, 
-    { name: 'Advisory AI', icon: <SparklesIcon />, view: View.Advisory },
-    { name: 'Billing & AR', icon: <CreditCardIcon />, view: View.Billing },
+    { name: 'Dashboard', icon: <DashboardIcon />, view: View.Dashboard },
+    { name: 'Workflow', icon: <ClipboardCheckIcon />, view: View.Tasks },
     { name: 'Timesheets', icon: <ClockIcon />, view: View.Timesheets },
+    { name: 'Govt Portals', icon: <BuildingIcon />, view: View.Portal }, 
+    { name: 'Regulatory', icon: <NewsIcon />, view: View.Regulatory },
+    { name: 'Taxation', icon: <DocumentIcon />, view: View.TaxFiling },
+    { name: 'Compliance', icon: <BriefcaseIcon />, view: View.Compliance },
+    { name: 'Advisory AI', icon: <SparklesIcon />, view: View.Advisory },
+    { name: 'Billing', icon: <CreditCardIcon />, view: View.Billing },
+    { name: 'Documents', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>, view: View.Documents },
   ];
 
   const containerClasses = `
@@ -52,15 +52,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
 
   return (
     <aside className={containerClasses}>
+      {/* Mobile Close */}
       <button onClick={onClose} className="lg:hidden absolute top-4 right-4 p-2 text-[var(--text-secondary)]">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
       </button>
 
       <div className="p-4">
+        {/* Firm Brand / Logo */}
         <div className="mb-6 px-2">
             <Logo className="w-8 h-8" textClassName="text-lg" />
         </div>
 
+        {/* Client Switcher - Compact & Modern */}
         <div className="mb-6">
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
@@ -108,29 +111,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, clients, s
         ))}
 
         <div className="pt-6 pb-2 px-3">
-            <p className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Partner Suite</p>
+            <p className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">System</p>
         </div>
         
         <button
-            onClick={() => setActiveView(View.Intelligence)}
+            onClick={() => setActiveView(View.AuditLog)}
             className={`w-full flex items-center px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                activeView === View.Intelligence ? 'bg-zinc-100 dark:bg-zinc-800 text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)]'
+                activeView === View.AuditLog ? 'bg-zinc-100 dark:bg-zinc-800 text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)]'
             }`}
         >
-            <span className="mr-3 w-4 h-4 text-[var(--text-tertiary)]"><ChartIcon /></span>
-            Profit Intelligence
+            <span className="mr-3 w-4 h-4 text-[var(--text-tertiary)]"><ShieldCheckIcon /></span>
+            Audit Logs
         </button>
-
-        <button
-            onClick={() => setActiveView(View.Team)}
-            className={`w-full flex items-center px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                activeView === View.Team ? 'bg-zinc-100 dark:bg-zinc-800 text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)]'
-            }`}
-        >
-            <span className="mr-3 w-4 h-4 text-[var(--text-tertiary)]"><UserIcon /></span>
-            Team Utilization
-        </button>
-
         <button
             onClick={() => setActiveView(View.Settings)}
             className={`w-full flex items-center px-3 py-2 rounded-md text-xs font-medium transition-all ${
