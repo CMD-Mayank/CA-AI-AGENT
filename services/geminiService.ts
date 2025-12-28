@@ -1,7 +1,7 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from '../constants';
 
+// Initializing the AI client with the environment variable injected by Netlify/Vite
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
 interface FilePayload {
@@ -11,8 +11,7 @@ interface FilePayload {
 
 export async function* runChatStream(prompt: string, file?: FilePayload): AsyncGenerator<string> {
   try {
-    // Upgraded to gemini-3-pro-preview for professional-grade complex reasoning
-    // required for Chartered Accountant tasks.
+    // Using gemini-3-pro-preview for advanced CA advisory tasks as per latest guidelines
     const model = 'gemini-3-pro-preview';
 
     let contents: any;
@@ -30,7 +29,9 @@ export async function* runChatStream(prompt: string, file?: FilePayload): AsyncG
         ],
       };
     } else {
-      contents = prompt;
+      contents = {
+        parts: [{ text: prompt }]
+      };
     }
 
     const responseStream = await ai.models.generateContentStream({
@@ -42,7 +43,9 @@ export async function* runChatStream(prompt: string, file?: FilePayload): AsyncG
     });
 
     for await (const chunk of responseStream) {
-        yield chunk.text;
+        if (chunk.text) {
+          yield chunk.text;
+        }
     }
 
   } catch (error) {
